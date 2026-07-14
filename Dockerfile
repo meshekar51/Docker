@@ -5,4 +5,4 @@ COPY ./docker_cheatsheet.pdf /tmp
 ENTRYPOINT ["ping"]
 LABEL version="9.0"
 EXPOSE 80/tcp
-ENV prod
+ENV APP_ENV=prod
