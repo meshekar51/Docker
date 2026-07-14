@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker & Kubernetes — Topics 06–07</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0d0f1a;
+    --surface: #13162a;
+    --surface2: #1a1e35;
+    --border: #252a45;
+    --text: #e2e8f8;
+    --muted: #7b84ab;
+    --accent1: #3ec9f5;
+    --accent2: #5bf5a0;
+    --accent3: #f7c948;
+    --accent4: #7c6af7;
+    --accent5: #f76c6c;
+    --accent6: #f78b3c;
+    --c-keyword:  #c792ea;
+    --c-string:   #c3e88d;
+    --c-comment:  #697098;
+    --c-number:   #f78c6c;
+    --c-func:     #82aaff;
+    --c-class:    #ffcb6b;
+    --c-operator: #89ddff;
+    --c-builtin:  #56d8ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.75; }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(135deg, #0d0f1a 0%, #0a1218 50%, #0d0f1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 48px 56px; position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(62,201,245,.13) 0%, transparent 70%),
+      radial-gradient(ellipse 45% 40% at 15% 75%, rgba(247,201,72,.10) 0%, transparent 70%);
+  }
+  .cover-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(62,201,245,.12); border: 1px solid rgba(62,201,245,.35);
+    border-radius: 999px; padding: 5px 16px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent1);
+    letter-spacing: .08em; margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; line-height: 1.1;
+    background: linear-gradient(90deg, #fff 0%, #9de8ff 55%, var(--accent1) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 12px;
+  }
+  .cover-sub { font-size: 16px; color: var(--muted); margin-bottom: 40px; }
+  .cover-table { width: 100%; max-width: 760px; border-collapse: collapse; font-size: 14px; }
+  .cover-table th {
+    background: rgba(62,201,245,.09); color: var(--accent1);
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 10px 16px; text-align: left; border: 1px solid var(--border);
+  }
+  .cover-table td { padding: 10px 16px; border: 1px solid var(--border); vertical-align: top; }
+  .cover-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  .cover-table td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--accent3); font-size: 13px; white-space: nowrap; }
+  .cover-note {
+    margin-top: 32px; padding: 14px 20px;
+    background: rgba(247,201,72,.07); border-left: 3px solid var(--accent3);
+    border-radius: 0 8px 8px 0; font-size: 13px; color: var(--muted); max-width: 760px;
+  }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 0 32px; }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 8px; padding: 16px 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .breadcrumb a { color: var(--accent1); text-decoration: none; }
+  .breadcrumb span { color: var(--border); }
+
+  /* ── TOC ── */
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px 36px; margin: 48px 0; }
+  .toc-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
+  .toc-group { margin-bottom: 18px; }
+  .toc-group-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-bottom: 6px; font-weight: 700; }
+  .toc a { display: block; padding: 3px 0 3px 16px; font-size: 13.5px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; transition: all .15s; }
+  .toc a:hover { color: var(--text); padding-left: 20px; }
+  .toc-t6 .toc-group-label { color: var(--accent1); }
+  .toc-t6 .toc a:hover { border-left-color: var(--accent1); }
+  .toc-t7 .toc-group-label { color: var(--accent3); }
+  .toc-t7 .toc a:hover { border-left-color: var(--accent3); }
+
+  /* ── TOPIC HEADER ── */
+  .topic-header {
+    margin: 56px 0 36px; padding: 32px 36px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    position: relative; overflow: hidden;
+  }
+  .topic-header::after {
+    content: attr(data-num); position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+    font-family: 'Syne', sans-serif; font-size: 120px; font-weight: 800;
+    opacity: .04; color: white; pointer-events: none; line-height: 1;
+  }
+  .topic-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; }
+  .topic-header h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+  .topic-objective { font-size: 12.5px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+  .t6 .topic-eyebrow { color: var(--accent1); } .t6 { border-top: 3px solid var(--accent1); }
+  .t7 .topic-eyebrow { color: var(--accent3); } .t7 { border-top: 3px solid var(--accent3); }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; color: var(--muted); }
+
+  /* ── CALLOUTS ── */
+  .callout { border-radius: 10px; padding: 20px 24px; margin: 20px 0; font-size: 14px; }
+  .callout-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .callout-icon { font-size: 16px; }
+  .layman    { background: rgba(62,201,245,.07);  border: 1px solid rgba(62,201,245,.22); }
+  .layman .callout-title { color: var(--accent1); }
+  .realworld { background: rgba(91,245,160,.07);  border: 1px solid rgba(91,245,160,.2); }
+  .realworld .callout-title { color: var(--accent2); }
+  .tip       { background: rgba(247,201,72,.07);  border: 1px solid rgba(247,201,72,.25); border-left: 3px solid var(--accent3); }
+  .tip .callout-title { color: var(--accent3); }
+  .warning   { background: rgba(247,108,108,.07); border: 1px solid rgba(247,108,108,.25); border-left: 3px solid var(--accent5); }
+  .warning .callout-title { color: var(--accent5); }
+  .important { background: rgba(124,106,247,.07); border: 1px solid rgba(124,106,247,.25); border-left: 3px solid var(--accent4); }
+  .important .callout-title { color: var(--accent4); }
+
+  /* ── TABLES ── */
+  .tbl-wrap { overflow-x: auto; margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.data th { background: var(--surface2); color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 10px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  table.data td { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: top; }
+  table.data tr:last-child td { border-bottom: none; }
+  table.data tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+  table.data td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--accent3); white-space: nowrap; }
+  table.data td.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent1); }
+  table.data td.green { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent2); }
+
+  /* ── CODE BLOCKS ── */
+  .code-block { margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; font-family: 'JetBrains Mono', monospace; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 11.5px; }
+  .code-lang { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+  .lang-yaml   { background: rgba(91,245,160,.12);  color: var(--accent2); }
+  .lang-bash   { background: rgba(247,201,72,.12);  color: var(--accent3); }
+  .lang-output { background: rgba(124,106,247,.10); color: var(--accent4); }
+  .lang-go     { background: rgba(62,201,245,.12);  color: var(--accent1); }
+  .code-fname  { color: var(--muted); font-size: 12px; }
+
+  pre { padding: 20px 22px; background: #0a0c18; overflow-x: auto; font-size: 13px; line-height: 1.7; }
+  .kw  { color: var(--c-keyword); font-weight: 700; }
+  .str { color: var(--c-string); }
+  .cm  { color: var(--c-comment); font-style: italic; }
+  .num { color: var(--c-number); }
+  .fn  { color: var(--c-func); }
+  .cls { color: var(--c-class); }
+  .op  { color: var(--c-operator); }
+  .var { color: #eeffff; }
+  .hl  { background: rgba(62,201,245,.09); display: block; margin: 0 -22px; padding: 0 22px; border-left: 3px solid var(--accent1); }
+  .hl2 { background: rgba(247,201,72,.08);  display: block; margin: 0 -22px; padding: 0 22px; border-left: 3px solid var(--accent3); }
+  .hl3 { background: rgba(91,245,160,.07);  display: block; margin: 0 -22px; padding: 0 22px; border-left: 3px solid var(--accent2); }
+
+  /* ── STEPS ── */
+  .steps { display: flex; flex-direction: column; gap: 2px; margin: 16px 0; }
+  .step { display: grid; grid-template-columns: 40px 1fr; gap: 16px; align-items: start; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .step:last-child { border-bottom: none; }
+  .step-num { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .sn1 { background: rgba(62,201,245,.2);  color: var(--accent1); }
+  .sn2 { background: rgba(91,245,160,.15); color: var(--accent2); }
+  .sn3 { background: rgba(247,201,72,.15); color: var(--accent3); }
+  .sn4 { background: rgba(124,106,247,.15);color: var(--accent4); }
+  .sn5 { background: rgba(247,108,108,.15);color: var(--accent5); }
+  .step-body { font-size: 14px; padding-top: 6px; }
+  .step-label { font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .step-desc  { color: var(--muted); font-size: 13px; }
+
+  /* ── FILE TREE ── */
+  .file-tree { background: #0a0c18; border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 2; margin: 20px 0; }
+  .ft-dir   { color: var(--accent3); }
+  .ft-file  { color: var(--accent2); }
+  .ft-muted { color: var(--muted); }
+  .ft-tpl   { color: var(--accent1); }
+  .ft-hint  { color: var(--c-comment); font-style: italic; margin-left: 12px; }
+
+  /* ── COMPARE GRID ── */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .compare-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; }
+  .compare-card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .compare-card ul { padding-left: 0; list-style: none; }
+  .compare-card ul li { font-size: 13px; color: var(--muted); padding: 4px 0 4px 20px; position: relative; }
+  .compare-card ul li::before { content: '·'; position: absolute; left: 6px; color: var(--muted); }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrap { margin: 28px 0; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); overflow: hidden; }
+  .diagram-label { padding: 10px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .diagram-label span { color: var(--accent1); }
+  .diagram-wrap svg { display: block; width: 100%; }
+
+  /* ── SUMMARY ── */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 32px 0; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; }
+  .summary-card-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .summary-card-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+  .summary-card-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer { margin-top: 64px; padding: 32px 48px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 12.5px; }
+  footer strong { color: var(--accent3); }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); padding: 1px 6px; border-radius: 4px; color: var(--accent1); }
+  p { margin-bottom: 12px; font-size: 14.5px; }
+  h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin: 24px 0 12px; color: var(--accent1); }
+  ul.styled { padding-left: 0; list-style: none; margin: 12px 0; }
+  ul.styled li { padding: 6px 0 6px 28px; position: relative; font-size: 14px; color: var(--text); border-bottom: 1px solid rgba(255,255,255,.03); }
+  ul.styled li::before { content: '▸'; position: absolute; left: 8px; color: var(--accent1); font-size: 11px; top: 9px; }
+
+  @media (max-width: 640px) {
+    .cover h1 { font-size: 34px; }
+    .cover { padding: 40px 24px 36px; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .page { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div style="position:relative;z-index:1;">
+    <div class="cover-badge">☸️ KUBERNETES &nbsp;·&nbsp; TOPICS 06–07 &nbsp;·&nbsp; INGRESS · TLS · HELM</div>
+    <h1>Ingress, TLS &amp;<br>Helm Packaging</h1>
+    <p class="cover-sub">Route real HTTPS traffic into your cluster, terminate TLS automatically with cert-manager, and package entire applications with Helm for repeatable deployments.</p>
+
+    <table class="cover-table">
+      <thead><tr><th>#</th><th>Topic</th><th>Key Concepts</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>TOPIC 06</td>
+          <td>Ingress Controllers &amp; TLS</td>
+          <td>Ingress vs Service, NGINX Ingress Controller, path &amp; host routing, cert-manager, Let's Encrypt, ClusterIssuer, TLS termination, annotations</td>
+        </tr>
+        <tr>
+          <td>TOPIC 07</td>
+          <td>Helm — Kubernetes Package Manager</td>
+          <td>Charts, templates, values.yaml, Releases, Repositories, helm install/upgrade/rollback, conditionals, helpers, packaging your own chart, Helmfile</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cover-note">
+      📌 &nbsp;Continues from Topics 01–05. By the end of Topic 07 your full stack — API, Postgres, Ingress, TLS — is packaged as a single Helm chart that deploys to any cluster with one command.
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<div class="breadcrumb">
+  <a href="#">Docker &amp; Kubernetes</a>
+  <span>›</span><span>Topics 06 – 07</span>
+  <span>›</span>
+  <span style="color:var(--accent1);">Ingress · cert-manager · Helm</span>
+</div>
+
+<!-- ══ TOC ══ -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0 40px;">
+    <div class="toc-group toc-t6">
+      <div class="toc-group-label">TOPIC 06 — Ingress &amp; TLS</div>
+      <div class="toc">
+        <a href="#t6s1">6.1 The Problem with LoadBalancer Services</a>
+        <a href="#t6s2">6.2 What is an Ingress Controller?</a>
+        <a href="#t6s3">6.3 Routing Rules — Host &amp; Path</a>
+        <a href="#t6s4">6.4 TLS with cert-manager &amp; Let's Encrypt</a>
+        <a href="#t6s5">6.5 Useful Annotations</a>
+      </div>
+    </div>
+    <div class="toc-group toc-t7">
+      <div class="toc-group-label">TOPIC 07 — Helm</div>
+      <div class="toc">
+        <a href="#t7s1">7.1 Why Helm?</a>
+        <a href="#t7s2">7.2 Chart Structure</a>
+        <a href="#t7s3">7.3 Values &amp; Templates</a>
+        <a href="#t7s4">7.4 Core Helm Commands</a>
+        <a href="#t7s5">7.5 Packaging Your Own Chart</a>
+        <a href="#t7s6">7.6 Helmfile — Managing Multiple Charts</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════ TOPIC 06 ══ -->
+<div class="topic-header t6" data-num="06" id="topic06">
+  <div class="topic-eyebrow">TOPIC 06 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>Ingress Controllers &amp; TLS</h2>
+  <p class="topic-objective">Objective — Stop creating one cloud load balancer per service. Use a single Ingress Controller to route HTTP/HTTPS traffic to many services, and automate TLS certificates with cert-manager.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span class="callout-icon">💡</span> Layman's Explanation</div>
+  A hotel has one front door, not a separate door for the restaurant, gym, and spa. A <strong>LoadBalancer Service</strong> is like giving each service its own front door (and paying for each door separately — at AWS prices). An <strong>Ingress Controller</strong> is the hotel's reception desk: one public IP, and it routes guests to the right place based on their request. <code>api.myapp.com</code> → API pods, <code>myapp.com/docs</code> → docs pods. And <strong>cert-manager</strong> is the automatic locksmith that keeps the front door's lock (TLS cert) fresh — no manual renewal ever.
+</div>
+
+
+<!-- 6.1 -->
+<div class="section" id="t6s1">
+  <div class="section-title"><span class="section-num">6.1</span> The Problem with LoadBalancer Services</div>
+
+  <p>From Topic 03, a <code>type: LoadBalancer</code> Service provisions a cloud load balancer (AWS ELB, GCP LB) per service. This has real costs:</p>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Problem</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Cost</td><td>Each AWS ELB costs ~$18/month + data transfer. 10 services = $180+/month in LB fees alone</td></tr>
+        <tr><td>IP sprawl</td><td>Every service gets a different external IP — hard to manage DNS, firewalls, and certificates</td></tr>
+        <tr><td>No HTTP routing</td><td>LoadBalancer operates at L4 (TCP) — it cannot route based on URL path or hostname</td></tr>
+        <tr><td>No TLS termination</td><td>Each service must manage its own TLS certificate independently</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 6.2 -->
+<div class="section" id="t6s2">
+  <div class="section-title"><span class="section-num">6.2</span> What is an Ingress Controller?</div>
+
+  <p>An <strong>Ingress Controller</strong> is a Pod running inside your cluster (typically NGINX or Traefik) exposed via a <em>single</em> LoadBalancer Service. An <strong>Ingress</strong> resource then defines routing rules — the controller reads these rules and configures itself dynamically.</p>
+
+  <!-- DIAGRAM 1 – Ingress routing architecture -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 01</span> — Ingress Controller: one LB, many services, host &amp; path routing</div>
+    <svg viewBox="0 0 860 370" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Internet -->
+      <rect x="20" y="145" width="100" height="80" rx="8" fill="#1a1a2e" stroke="#252a45" stroke-width="1"/>
+      <text x="70" y="178" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Internet</text>
+      <text x="70" y="194" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">*.myapp.com</text>
+
+      <!-- Single LB -->
+      <rect x="152" y="130" width="138" height="110" rx="10" fill="#0e1a28" stroke="#f7c948" stroke-width="1.5"/>
+      <text x="221" y="160" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">AWS ELB</text>
+      <text x="221" y="176" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">1 load balancer</text>
+      <text x="221" y="192" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">1 public IP</text>
+      <text x="221" y="214" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">~$18/mo (shared!)</text>
+
+      <line x1="120" y1="185" x2="150" y2="185" stroke="#f7c948" stroke-width="1.5"/>
+      <polygon points="150,180 160,185 150,190" fill="#f7c948"/>
+
+      <!-- NGINX Ingress Controller pod -->
+      <rect x="322" y="120" width="165" height="130" rx="10" fill="#071a28" stroke="#3ec9f5" stroke-width="2"/>
+      <rect x="322" y="120" width="165" height="32" rx="10" fill="#0a2535"/>
+      <text x="404" y="141" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">NGINX Ingress</text>
+      <text x="404" y="156" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Controller Pod</text>
+      <text x="404" y="178" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">reads Ingress resources</text>
+      <text x="404" y="193" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">configures nginx.conf</text>
+      <text x="404" y="212" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">watches K8s API for changes</text>
+      <text x="404" y="228" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">hot-reloads on Ingress update</text>
+
+      <line x1="290" y1="185" x2="320" y2="185" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="320,180 330,185 320,190" fill="#3ec9f5"/>
+
+      <!-- Routing arrows -->
+      <line x1="487" y1="160" x2="570" y2="90"  stroke="#3ec9f5" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <line x1="487" y1="185" x2="570" y2="185" stroke="#3ec9f5" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <line x1="487" y1="210" x2="570" y2="280" stroke="#3ec9f5" stroke-width="1.2" stroke-dasharray="4,3"/>
+
+      <!-- Service A -->
+      <rect x="572" y="48" width="170" height="72" rx="8" fill="#091a28" stroke="#5bf5a0" stroke-width="1"/>
+      <text x="657" y="74" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">api-service (ClusterIP)</text>
+      <text x="657" y="92" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">api.myapp.com → :3000</text>
+      <text x="657" y="108" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">3 Pods (api:2.0)</text>
+
+      <!-- Service B -->
+      <rect x="572" y="148" width="170" height="72" rx="8" fill="#091a28" stroke="#5bf5a0" stroke-width="1"/>
+      <text x="657" y="174" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">docs-service (ClusterIP)</text>
+      <text x="657" y="192" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">myapp.com/docs → :8080</text>
+      <text x="657" y="208" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">1 Pod (docs:latest)</text>
+
+      <!-- Service C -->
+      <rect x="572" y="248" width="170" height="72" rx="8" fill="#091a28" stroke="#5bf5a0" stroke-width="1"/>
+      <text x="657" y="274" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">admin-service (ClusterIP)</text>
+      <text x="657" y="292" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">admin.myapp.com → :4000</text>
+      <text x="657" y="308" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">2 Pods (admin:1.5)</text>
+
+      <!-- TLS lock icon area -->
+      <text x="404" y="278" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">🔒 TLS terminated here</text>
+      <text x="404" y="294" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">cert-manager auto-renews certs</text>
+      <text x="404" y="310" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">backend services get plain HTTP</text>
+    </svg>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num sn1">1</div>
+      <div class="step-body">
+        <div class="step-label">Install NGINX Ingress Controller</div>
+        <div class="step-desc">Deploys the controller pods and creates one LoadBalancer Service. All other services become ClusterIP — internal only.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num sn2">2</div>
+      <div class="step-body">
+        <div class="step-label">Create Ingress resources</div>
+        <div class="step-desc">Each Ingress resource defines routing rules (hosts, paths → services). The controller watches for them and reloads automatically.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num sn3">3</div>
+      <div class="step-body">
+        <div class="step-label">Point DNS to the LB IP</div>
+        <div class="step-desc">All your domains (api.myapp.com, myapp.com) point to the same single IP via DNS A records or CNAME.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num sn4">4</div>
+      <div class="step-body">
+        <div class="step-label">Add TLS via cert-manager</div>
+        <div class="step-desc">cert-manager handles ACME challenges with Let's Encrypt, stores certs as K8s Secrets, and auto-renews before expiry.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Install NGINX Ingress Controller via Helm</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># Add the official ingress-nginx Helm repository</span>
+<span class="fn">helm</span> repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+<span class="fn">helm</span> repo update
+
+<span class="cm"># Install into its own namespace</span>
+<span class="fn">helm</span> install ingress-nginx ingress-nginx/ingress-nginx \
+  <span class="op">--namespace</span> ingress-nginx \
+  <span class="op">--create-namespace</span> \
+  <span class="op">--set</span> controller.replicaCount=<span class="num">2</span>
+
+<span class="cm"># Get the external IP assigned to the controller</span>
+<span class="fn">kubectl</span> get svc <span class="op">-n</span> ingress-nginx
+
+<span class="cm"># Output:</span>
+<span class="str">NAME                       TYPE           CLUSTER-IP    EXTERNAL-IP       PORT(S)</span>
+<span class="str">ingress-nginx-controller   LoadBalancer   10.100.0.10   54.123.45.67      80,443</span></pre>
+  </div>
+</div>
+
+
+<!-- 6.3 -->
+<div class="section" id="t6s3">
+  <div class="section-title"><span class="section-num">6.3</span> Routing Rules — Host &amp; Path</div>
+
+  <p>An <strong>Ingress</strong> resource is a set of rules. Each rule matches traffic by hostname and/or URL path and forwards it to a backend Service.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">ingress.yaml — host-based + path-based routing</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Ingress</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">myapp-ingress</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+  <span class="kw">annotations</span><span class="op">:</span>
+<span class="hl">    <span class="kw">kubernetes.io/ingress.class</span><span class="op">:</span> <span class="str">"nginx"</span>
+    <span class="kw">nginx.ingress.kubernetes.io/rewrite-target</span><span class="op">:</span> <span class="str">/</span></span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">tls</span><span class="op">:</span>                                  <span class="cm"># TLS — cert stored as a Secret</span>
+    <span class="op">-</span> <span class="kw">hosts</span><span class="op">:</span>
+        <span class="op">-</span> <span class="str">api.myapp.com</span>
+        <span class="op">-</span> <span class="str">myapp.com</span>
+      <span class="kw">secretName</span><span class="op">:</span> <span class="str">myapp-tls</span>            <span class="cm"># cert-manager writes here</span>
+  <span class="kw">rules</span><span class="op">:</span>
+    <span class="cm"># ── Rule 1: route by hostname ─────────────────────────────────</span>
+<span class="hl">    <span class="op">-</span> <span class="kw">host</span><span class="op">:</span> <span class="str">api.myapp.com</span>
+      <span class="kw">http</span><span class="op">:</span>
+        <span class="kw">paths</span><span class="op">:</span>
+          <span class="op">-</span> <span class="kw">path</span><span class="op">:</span> <span class="str">/</span>
+            <span class="kw">pathType</span><span class="op">:</span> <span class="str">Prefix</span>
+            <span class="kw">backend</span><span class="op">:</span>
+              <span class="kw">service</span><span class="op">:</span>
+                <span class="kw">name</span><span class="op">:</span> <span class="str">api-service</span>
+                <span class="kw">port</span><span class="op">:</span> <span class="kw">number</span><span class="op">:</span> <span class="num">80</span></span>
+
+    <span class="cm"># ── Rule 2: route by URL path on same domain ──────────────────</span>
+    <span class="op">-</span> <span class="kw">host</span><span class="op">:</span> <span class="str">myapp.com</span>
+      <span class="kw">http</span><span class="op">:</span>
+        <span class="kw">paths</span><span class="op">:</span>
+          <span class="op">-</span> <span class="kw">path</span><span class="op">:</span> <span class="str">/docs</span>
+            <span class="kw">pathType</span><span class="op">:</span> <span class="str">Prefix</span>
+            <span class="kw">backend</span><span class="op">:</span>
+              <span class="kw">service</span><span class="op">:</span>
+                <span class="kw">name</span><span class="op">:</span> <span class="str">docs-service</span>
+                <span class="kw">port</span><span class="op">:</span> <span class="kw">number</span><span class="op">:</span> <span class="num">80</span>
+          <span class="op">-</span> <span class="kw">path</span><span class="op">:</span> <span class="str">/</span>
+            <span class="kw">pathType</span><span class="op">:</span> <span class="str">Prefix</span>
+            <span class="kw">backend</span><span class="op">:</span>
+              <span class="kw">service</span><span class="op">:</span>
+                <span class="kw">name</span><span class="op">:</span> <span class="str">frontend-service</span>
+                <span class="kw">port</span><span class="op">:</span> <span class="kw">number</span><span class="op">:</span> <span class="num">80</span></pre>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>pathType</th><th>Match behaviour</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Prefix</td><td>Match path prefix (most common)</td><td class="mono">/api matches /api, /api/users, /api/v2</td></tr>
+        <tr><td>Exact</td><td>Match exact path only</td><td class="mono">/health matches only /health</td></tr>
+        <tr><td>ImplementationSpecific</td><td>Controller decides (regex in NGINX)</td><td class="mono">/api/(.*) with capture groups</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 6.4 -->
+<div class="section" id="t6s4">
+  <div class="section-title"><span class="section-num">6.4</span> TLS with cert-manager &amp; Let's Encrypt</div>
+
+  <p><strong>cert-manager</strong> is a Kubernetes add-on that automates the full lifecycle of TLS certificates: request → ACME challenge → issue → store as Secret → renew (30 days before expiry).</p>
+
+  <!-- DIAGRAM 2 – cert-manager ACME flow -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 02</span> — cert-manager ACME flow: ClusterIssuer → Certificate → TLS Secret</div>
+    <svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- cert-manager -->
+      <rect x="20" y="70" width="148" height="80" rx="10" fill="#0e1820" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="94" y="100" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">cert-manager</text>
+      <text x="94" y="118" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">watches Certificate</text>
+      <text x="94" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">resources in K8s</text>
+
+      <line x1="168" y1="110" x2="206" y2="110" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="206,105 216,110 206,115" fill="#3ec9f5"/>
+      <text x="188" y="100" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">ACME</text>
+
+      <!-- Let's Encrypt -->
+      <rect x="216" y="70" width="148" height="80" rx="10" fill="#1a1008" stroke="#f78b3c" stroke-width="1.5"/>
+      <text x="290" y="100" fill="#f78b3c" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Let's Encrypt</text>
+      <text x="290" y="118" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">verifies domain via</text>
+      <text x="290" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">HTTP-01 challenge</text>
+
+      <line x1="364" y1="110" x2="402" y2="110" stroke="#f78b3c" stroke-width="1.5"/>
+      <polygon points="402,105 412,110 402,115" fill="#f78b3c"/>
+      <text x="383" y="100" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">issues</text>
+
+      <!-- TLS Secret -->
+      <rect x="412" y="70" width="148" height="80" rx="10" fill="#0f0a1a" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="486" y="100" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">K8s TLS Secret</text>
+      <text x="486" y="118" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">myapp-tls</text>
+      <text x="486" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tls.crt + tls.key</text>
+
+      <line x1="560" y1="110" x2="598" y2="110" stroke="#7c6af7" stroke-width="1.5"/>
+      <polygon points="598,105 608,110 598,115" fill="#7c6af7"/>
+      <text x="579" y="100" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">reads</text>
+
+      <!-- NGINX Ingress -->
+      <rect x="608" y="70" width="228" height="80" rx="10" fill="#071a28" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="722" y="100" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">NGINX Ingress Controller</text>
+      <text x="722" y="118" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">serves HTTPS using cert</text>
+      <text x="722" y="133" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">auto-renew 30 days before expiry</text>
+
+      <!-- Renewal arc label -->
+      <text x="430" y="185" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">♻️  cert-manager auto-renews — no manual intervention ever</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Install cert-manager</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># Install cert-manager (includes CRDs)</span>
+<span class="fn">helm</span> repo add jetstack https://charts.jetstack.io
+<span class="fn">helm</span> repo update
+
+<span class="fn">helm</span> install cert-manager jetstack/cert-manager \
+  <span class="op">--namespace</span> cert-manager \
+  <span class="op">--create-namespace</span> \
+  <span class="op">--set</span> installCRDs=<span class="str">true</span>
+
+<span class="cm"># Verify all pods are running</span>
+<span class="fn">kubectl</span> get pods <span class="op">-n</span> cert-manager</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">clusterissuer.yaml — Let's Encrypt production issuer</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">cert-manager.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">ClusterIssuer</span>                   <span class="cm"># cluster-wide (vs Issuer: namespace-scoped)</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">letsencrypt-prod</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">acme</span><span class="op">:</span>
+<span class="hl">    <span class="kw">server</span><span class="op">:</span> <span class="str">https://acme-v02.api.letsencrypt.org/directory</span></span>
+    <span class="kw">email</span><span class="op">:</span> <span class="str">ops@myapp.com</span>              <span class="cm"># expiry warning emails go here</span>
+    <span class="kw">privateKeySecretRef</span><span class="op">:</span>
+      <span class="kw">name</span><span class="op">:</span> <span class="str">letsencrypt-prod-key</span>
+    <span class="kw">solvers</span><span class="op">:</span>
+      <span class="op">-</span> <span class="kw">http01</span><span class="op">:</span>                       <span class="cm"># HTTP-01 challenge via Ingress</span>
+          <span class="kw">ingress</span><span class="op">:</span>
+            <span class="kw">class</span><span class="op">:</span> <span class="str">nginx</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">ingress-tls.yaml — Ingress with cert-manager annotation</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Ingress</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">myapp-ingress</span>
+  <span class="kw">annotations</span><span class="op">:</span>
+<span class="hl">    <span class="kw">cert-manager.io/cluster-issuer</span><span class="op">:</span> <span class="str">"letsencrypt-prod"</span>  <span class="cm"># ← triggers cert request</span></span>
+    <span class="kw">kubernetes.io/ingress.class</span><span class="op">:</span>    <span class="str">"nginx"</span>
+    <span class="kw">nginx.ingress.kubernetes.io/ssl-redirect</span><span class="op">:</span> <span class="str">"true"</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">tls</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">hosts</span><span class="op">:</span> [<span class="str">api.myapp.com</span>]
+      <span class="kw">secretName</span><span class="op">:</span> <span class="str">api-tls</span>          <span class="cm"># cert-manager creates this Secret</span>
+  <span class="kw">rules</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">host</span><span class="op">:</span> <span class="str">api.myapp.com</span>
+      <span class="kw">http</span><span class="op">:</span>
+        <span class="kw">paths</span><span class="op">:</span>
+          <span class="op">-</span> <span class="kw">path</span><span class="op">:</span> <span class="str">/</span>
+            <span class="kw">pathType</span><span class="op">:</span> <span class="str">Prefix</span>
+            <span class="kw">backend</span><span class="op">:</span>
+              <span class="kw">service</span><span class="op">:</span>
+                <span class="kw">name</span><span class="op">:</span> <span class="str">api-service</span>
+                <span class="kw">port</span><span class="op">:</span> <span class="kw">number</span><span class="op">:</span> <span class="num">80</span></pre>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title"><span class="callout-icon">⚡</span> Staging First</div>
+    Let's Encrypt production has rate limits (5 certs per domain per week). Always test with the <strong>staging</strong> server first: <code>https://acme-staging-v02.api.letsencrypt.org/directory</code>. Create a <code>letsencrypt-staging</code> ClusterIssuer, verify it works (you'll get an untrusted cert), then switch to production.
+  </div>
+</div>
+
+
+<!-- 6.5 -->
+<div class="section" id="t6s5">
+  <div class="section-title"><span class="section-num">6.5</span> Useful NGINX Ingress Annotations</div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Annotation</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>ssl-redirect: "true"</code></td><td>Redirect all HTTP → HTTPS automatically</td></tr>
+        <tr><td><code>proxy-body-size: "50m"</code></td><td>Allow request bodies up to 50 MB (file uploads)</td></tr>
+        <tr><td><code>proxy-read-timeout: "120"</code></td><td>Increase timeout for slow upstream (default 60s)</td></tr>
+        <tr><td><code>rate-limit: "10r/s"</code></td><td>Rate-limit to 10 requests/second per IP</td></tr>
+        <tr><td><code>whitelist-source-range</code></td><td>Restrict access to specific IP CIDRs (e.g. office VPN only)</td></tr>
+        <tr><td><code>rewrite-target: /</code></td><td>Strip path prefix before forwarding (e.g. /api/v1 → /)</td></tr>
+        <tr><td><code>use-gzip: "true"</code></td><td>Enable gzip compression on responses</td></tr>
+        <tr><td><code>enable-cors: "true"</code></td><td>Add CORS headers for browser-side API calls</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════ TOPIC 07 ══ -->
+<div class="topic-header t7" data-num="07" id="topic07">
+  <div class="topic-eyebrow">TOPIC 07 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>Helm — Kubernetes Package Manager</h2>
+  <p class="topic-objective">Objective — Stop copy-pasting YAML. Use Helm to template, version, and share Kubernetes applications — then package your own full-stack app as a chart.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span class="callout-icon">💡</span> Layman's Explanation</div>
+  Installing Postgres on Kubernetes without Helm requires writing ~200 lines of YAML across 6 files, all by hand, getting the labels right, the Service names consistent, and the volume claims correct. With Helm it's <code>helm install my-db bitnami/postgresql --set auth.password=secret</code> — one command. Helm is to Kubernetes what <code>apt</code> or <code>npm</code> is to Linux / Node: a <strong>package manager</strong> that bundles everything an app needs into one installable, upgradeable, rollback-able unit called a <strong>Chart</strong>.
+</div>
+
+
+<!-- 7.1 -->
+<div class="section" id="t7s1">
+  <div class="section-title"><span class="section-num">7.1</span> Why Helm?</div>
+
+  <div class="compare-grid">
+    <div class="compare-card" style="border-top:3px solid var(--accent5);">
+      <div class="compare-card-title" style="color:var(--accent5);">❌ Raw YAML approach</div>
+      <ul>
+        <li>Duplicate values across many files (image tag in 3 places)</li>
+        <li>No easy way to diff dev vs prod config</li>
+        <li>Upgrade = <code>kubectl apply</code> and hope nothing breaks</li>
+        <li>Rollback = manually re-apply old YAML</li>
+        <li>Sharing requires copying &amp; editing files</li>
+        <li>No versioning or release history</li>
+      </ul>
+    </div>
+    <div class="compare-card" style="border-top:3px solid var(--accent3);">
+      <div class="compare-card-title" style="color:var(--accent3);">✅ Helm approach</div>
+      <ul>
+        <li>Single <code>values.yaml</code> controls the whole app</li>
+        <li>Override values per environment with <code>-f prod.yaml</code></li>
+        <li><code>helm upgrade</code> does atomic, tracked upgrades</li>
+        <li><code>helm rollback</code> in one command with history</li>
+        <li>Share via chart repositories (Artifact Hub)</li>
+        <li>Full release history: <code>helm history my-release</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+<!-- 7.2 -->
+<div class="section" id="t7s2">
+  <div class="section-title"><span class="section-num">7.2</span> Chart Structure</div>
+
+  <p>A <strong>Chart</strong> is a directory with a specific layout. Run <code>helm create myapp</code> to scaffold it:</p>
+
+  <div class="file-tree">
+<span class="ft-dir">myapp/</span>
+├── <span class="ft-file">Chart.yaml</span>          <span class="ft-hint"># chart metadata (name, version, appVersion)</span>
+├── <span class="ft-file">values.yaml</span>         <span class="ft-hint"># default values — users override these</span>
+├── <span class="ft-dir">templates/</span>          <span class="ft-hint"># Go-templated K8s manifests</span>
+│   ├── <span class="ft-tpl">deployment.yaml</span>  <span class="ft-hint"># uses {{ .Values.image.tag }} etc.</span>
+│   ├── <span class="ft-tpl">service.yaml</span>
+│   ├── <span class="ft-tpl">ingress.yaml</span>
+│   ├── <span class="ft-tpl">configmap.yaml</span>
+│   ├── <span class="ft-tpl">secret.yaml</span>
+│   ├── <span class="ft-tpl">_helpers.tpl</span>     <span class="ft-hint"># reusable template snippets</span>
+│   └── <span class="ft-tpl">NOTES.txt</span>       <span class="ft-hint"># printed after helm install</span>
+├── <span class="ft-dir">charts/</span>             <span class="ft-hint"># sub-charts (dependencies)</span>
+└── <span class="ft-file">.helmignore</span>         <span class="ft-hint"># like .gitignore for helm package</span>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Chart.yaml</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v2</span>
+<span class="kw">name</span><span class="op">:</span> <span class="str">myapp</span>
+<span class="kw">description</span><span class="op">:</span> <span class="str">Node.js API + Postgres full-stack chart</span>
+<span class="kw">type</span><span class="op">:</span> <span class="str">application</span>
+<span class="kw">version</span><span class="op">:</span> <span class="str">1.3.0</span>          <span class="cm"># chart version (bumped when chart changes)</span>
+<span class="kw">appVersion</span><span class="op">:</span> <span class="str">"2.1.0"</span>    <span class="cm"># your app version (informational)</span>
+<span class="kw">dependencies</span><span class="op">:</span>
+  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span>       <span class="str">postgresql</span>
+    <span class="kw">version</span><span class="op">:</span>    <span class="str">"13.x.x"</span>
+    <span class="kw">repository</span><span class="op">:</span> <span class="str">https://charts.bitnami.com/bitnami</span>
+    <span class="kw">condition</span><span class="op">:</span>  <span class="str">postgresql.enabled</span>    <span class="cm"># skip if using external DB</span></pre>
+  </div>
+</div>
+
+
+<!-- 7.3 -->
+<div class="section" id="t7s3">
+  <div class="section-title"><span class="section-num">7.3</span> Values &amp; Templates</div>
+
+  <p>Templates use Go's <code>text/template</code> syntax. Values flow in from <code>values.yaml</code> (or overrides) and are referenced as <code>{{ .Values.key }}</code>.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">values.yaml — default values for the chart</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">replicaCount</span><span class="op">:</span> <span class="num">2</span>
+
+<span class="kw">image</span><span class="op">:</span>
+  <span class="kw">repository</span><span class="op">:</span> <span class="str">123456789.dkr.ecr.eu-west-1.amazonaws.com/myapi</span>
+  <span class="kw">tag</span><span class="op">:</span> <span class="str">"2.1.0"</span>
+  <span class="kw">pullPolicy</span><span class="op">:</span> <span class="str">IfNotPresent</span>
+
+<span class="kw">service</span><span class="op">:</span>
+  <span class="kw">type</span><span class="op">:</span> <span class="str">ClusterIP</span>
+  <span class="kw">port</span><span class="op">:</span> <span class="num">80</span>
+
+<span class="kw">ingress</span><span class="op">:</span>
+  <span class="kw">enabled</span><span class="op">:</span> <span class="kw">true</span>
+  <span class="kw">host</span><span class="op">:</span> <span class="str">api.myapp.com</span>
+  <span class="kw">tls</span><span class="op">:</span>
+    <span class="kw">enabled</span><span class="op">:</span> <span class="kw">true</span>
+    <span class="kw">secretName</span><span class="op">:</span> <span class="str">api-tls</span>
+    <span class="kw">clusterIssuer</span><span class="op">:</span> <span class="str">letsencrypt-prod</span>
+
+<span class="kw">resources</span><span class="op">:</span>
+  <span class="kw">requests</span><span class="op">:</span>
+    <span class="kw">cpu</span><span class="op">:</span> <span class="str">"100m"</span>
+    <span class="kw">memory</span><span class="op">:</span> <span class="str">"128Mi"</span>
+  <span class="kw">limits</span><span class="op">:</span>
+    <span class="kw">cpu</span><span class="op">:</span> <span class="str">"500m"</span>
+    <span class="kw">memory</span><span class="op">:</span> <span class="str">"256Mi"</span>
+
+<span class="kw">postgresql</span><span class="op">:</span>
+  <span class="kw">enabled</span><span class="op">:</span> <span class="kw">true</span>             <span class="cm"># set false to use external RDS</span>
+  <span class="kw">auth</span><span class="op">:</span>
+    <span class="kw">database</span><span class="op">:</span> <span class="str">appdb</span>
+    <span class="kw">existingSecret</span><span class="op">:</span> <span class="str">db-credentials</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">templates/deployment.yaml — Go template consuming values</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">apps/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Deployment</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="fn">{{ include "myapp.fullname" . }}</span>    <span class="cm"># from _helpers.tpl</span>
+  <span class="kw">labels</span><span class="op">:</span>
+    <span class="fn">{{- include "myapp.labels" . | nindent 4 }}</span>
+<span class="kw">spec</span><span class="op">:</span>
+<span class="hl2">  <span class="kw">replicas</span><span class="op">:</span> <span class="fn">{{ .Values.replicaCount }}</span>     <span class="cm"># ← from values.yaml</span></span>
+  <span class="kw">selector</span><span class="op">:</span>
+    <span class="kw">matchLabels</span><span class="op">:</span>
+      <span class="fn">{{- include "myapp.selectorLabels" . | nindent 6 }}</span>
+  <span class="kw">template</span><span class="op">:</span>
+    <span class="kw">spec</span><span class="op">:</span>
+      <span class="kw">containers</span><span class="op">:</span>
+        <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="fn">{{ .Chart.Name }}</span>
+<span class="hl2">          <span class="kw">image</span><span class="op">:</span> <span class="str">"</span><span class="fn">{{ .Values.image.repository }}:{{ .Values.image.tag }}</span><span class="str">"</span></span>
+          <span class="kw">imagePullPolicy</span><span class="op">:</span> <span class="fn">{{ .Values.image.pullPolicy }}</span>
+          <span class="kw">resources</span><span class="op">:</span>
+            <span class="fn">{{- toYaml .Values.resources | nindent 12 }}</span>
+
+<span class="cm"># ── Conditional block — only render if ingress.enabled == true ────</span>
+<span class="cm"># (in templates/ingress.yaml)</span>
+<span class="fn">{{- if .Values.ingress.enabled }}</span>
+<span class="kw">apiVersion</span><span class="op">:</span> <span class="str">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Ingress</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">annotations</span><span class="op">:</span>
+<span class="hl">    <span class="fn">{{- if .Values.ingress.tls.enabled }}</span>
+    <span class="kw">cert-manager.io/cluster-issuer</span><span class="op">:</span> <span class="fn">{{ .Values.ingress.tls.clusterIssuer | quote }}</span>
+    <span class="fn">{{- end }}</span></span>
+<span class="fn">{{- end }}</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">templates/_helpers.tpl — reusable named templates</span>
+      <span class="code-lang lang-go">Go Template</span>
+    </div>
+    <pre><span class="fn">{{/*</span>
+<span class="cm">Expand the name of the chart.</span>
+<span class="fn">*/}}</span>
+<span class="fn">{{- define "myapp.fullname" -}}</span>
+<span class="fn">{{- .Release.Name }}-{{ .Chart.Name }}</span>
+<span class="fn">{{- end }}</span>
+
+<span class="fn">{{/*</span>
+<span class="cm">Common labels applied to all resources</span>
+<span class="fn">*/}}</span>
+<span class="fn">{{- define "myapp.labels" -}}</span>
+helm.sh/chart: <span class="fn">{{ .Chart.Name }}-{{ .Chart.Version }}</span>
+app.kubernetes.io/name: <span class="fn">{{ .Chart.Name }}</span>
+app.kubernetes.io/instance: <span class="fn">{{ .Release.Name }}</span>
+app.kubernetes.io/version: <span class="fn">{{ .Chart.AppVersion | quote }}</span>
+app.kubernetes.io/managed-by: <span class="fn">{{ .Release.Service }}</span>
+<span class="fn">{{- end }}</span></pre>
+  </div>
+</div>
+
+
+<!-- 7.4 -->
+<div class="section" id="t7s4">
+  <div class="section-title"><span class="section-num">7.4</span> Core Helm Commands</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — day-to-day Helm workflow</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># ── Repository management ─────────────────────────────────────────</span>
+<span class="fn">helm</span> repo add bitnami https://charts.bitnami.com/bitnami
+<span class="fn">helm</span> repo update                          <span class="cm"># refresh chart index</span>
+<span class="fn">helm</span> search repo postgresql              <span class="cm"># find charts in repos</span>
+<span class="fn">helm</span> show values bitnami/postgresql      <span class="cm"># view all default values</span>
+
+<span class="cm"># ── Install ───────────────────────────────────────────────────────</span>
+<span class="fn">helm</span> install my-api ./myapp \            <span class="cm"># from local chart</span>
+  <span class="op">--namespace</span> production \
+  <span class="op">--create-namespace</span> \
+  <span class="op">-f</span> values-prod.yaml \                  <span class="cm"># override with prod values</span>
+  <span class="op">--set</span> image.tag=<span class="str">"2.1.0"</span>              <span class="cm"># override single value</span>
+
+<span class="cm"># ── Upgrade (deploy new version) ──────────────────────────────────</span>
+<span class="fn">helm</span> upgrade my-api ./myapp \
+  <span class="op">-f</span> values-prod.yaml \
+  <span class="op">--set</span> image.tag=<span class="str">"2.2.0"</span> \
+  <span class="op">--atomic</span>                              <span class="cm"># auto-rollback if upgrade fails</span>
+
+<span class="cm"># ── Inspect releases ──────────────────────────────────────────────</span>
+<span class="fn">helm</span> list <span class="op">-n</span> production                 <span class="cm"># list all releases in namespace</span>
+<span class="fn">helm</span> history my-api                     <span class="cm"># show revision history</span>
+<span class="fn">helm</span> status my-api                      <span class="cm"># current status + NOTES</span>
+
+<span class="cm"># ── Rollback ──────────────────────────────────────────────────────</span>
+<span class="fn">helm</span> rollback my-api <span class="num">2</span>                  <span class="cm"># roll back to revision 2</span>
+
+<span class="cm"># ── Dry run / debug ───────────────────────────────────────────────</span>
+<span class="fn">helm</span> template my-api ./myapp \          <span class="cm"># render templates without installing</span>
+  <span class="op">-f</span> values-prod.yaml | <span class="fn">kubectl</span> apply <span class="op">--dry-run=client</span> <span class="op">-f</span> -
+
+<span class="cm"># ── Uninstall ─────────────────────────────────────────────────────</span>
+<span class="fn">helm</span> uninstall my-api <span class="op">-n</span> production    <span class="cm"># removes all resources</span></pre>
+  </div>
+
+  <!-- DIAGRAM 3 – Helm release lifecycle -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 03</span> — Helm release lifecycle with revision history</div>
+    <svg viewBox="0 0 860 170" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:24px 30px;">
+      <!-- Timeline line -->
+      <line x1="40" y1="85" x2="820" y2="85" stroke="#252a45" stroke-width="1.5"/>
+
+      <!-- Rev 1 -->
+      <circle cx="120" cy="85" r="20" fill="#0e2535" stroke="#3ec9f5" stroke-width="2"/>
+      <text x="120" y="90" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">r1</text>
+      <text x="120" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">helm install</text>
+      <text x="120" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tag: 1.0.0</text>
+      <text x="120" y="55" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">deployed</text>
+
+      <!-- Rev 2 -->
+      <circle cx="290" cy="85" r="20" fill="#0e2535" stroke="#3ec9f5" stroke-width="2"/>
+      <text x="290" y="90" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">r2</text>
+      <text x="290" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">helm upgrade</text>
+      <text x="290" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tag: 2.0.0</text>
+      <text x="290" y="55" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">deployed</text>
+
+      <!-- Rev 3 – failed -->
+      <circle cx="460" cy="85" r="20" fill="#1a0808" stroke="#f76c6c" stroke-width="2"/>
+      <text x="460" y="90" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">r3</text>
+      <text x="460" y="120" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">helm upgrade</text>
+      <text x="460" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tag: 3.0.0-bad</text>
+      <text x="460" y="55" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">failed (--atomic)</text>
+
+      <!-- Rollback arrow -->
+      <path d="M 460 65 Q 420 30 290 65" stroke="#f7c948" stroke-width="1.5" fill="none" stroke-dasharray="5,3"/>
+      <polygon points="290,65 280,58 285,70" fill="#f7c948"/>
+      <text x="370" y="24" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">helm rollback r2</text>
+
+      <!-- Rev 4 -->
+      <circle cx="640" cy="85" r="20" fill="#0e2535" stroke="#3ec9f5" stroke-width="2"/>
+      <text x="640" y="90" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">r4</text>
+      <text x="640" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">helm upgrade</text>
+      <text x="640" y="133" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tag: 2.1.0</text>
+      <text x="640" y="55" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">deployed ✓</text>
+
+      <!-- Current marker -->
+      <text x="640" y="148" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">← CURRENT</text>
+    </svg>
+  </div>
+</div>
+
+
+<!-- 7.5 -->
+<div class="section" id="t7s5">
+  <div class="section-title"><span class="section-num">7.5</span> Packaging Your Own Chart</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — create, lint, package, push</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># 1. Scaffold a new chart</span>
+<span class="fn">helm</span> create myapp
+
+<span class="cm"># 2. Pull in dependencies declared in Chart.yaml</span>
+<span class="fn">helm</span> dependency update ./myapp
+
+<span class="cm"># 3. Lint — catches YAML errors and best-practice violations</span>
+<span class="fn">helm</span> lint ./myapp <span class="op">-f</span> values-prod.yaml
+
+<span class="cm"># 4. Render locally to review generated YAML</span>
+<span class="fn">helm</span> template my-api ./myapp <span class="op">-f</span> values-prod.yaml
+
+<span class="cm"># 5. Package into a versioned tarball</span>
+<span class="fn">helm</span> package ./myapp
+<span class="cm"># produces: myapp-1.3.0.tgz</span>
+
+<span class="cm"># 6. Push to OCI registry (e.g. AWS ECR, GitHub Packages)</span>
+<span class="fn">helm</span> push myapp-<span class="num">1</span>.<span class="num">3</span>.<span class="num">0</span>.tgz oci://123456789.dkr.ecr.eu-west-1.amazonaws.com/charts
+
+<span class="cm"># 7. Install from registry in CI/CD</span>
+<span class="fn">helm</span> install my-api \
+  oci://123456789.dkr.ecr.eu-west-1.amazonaws.com/charts/myapp \
+  <span class="op">--version</span> <span class="num">1</span>.<span class="num">3</span>.<span class="num">0</span> \
+  <span class="op">-f</span> values-prod.yaml</pre>
+  </div>
+
+  <p>Create environment-specific override files to keep your values.yaml minimal and clean:</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">values-prod.yaml — production overrides only</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="cm"># Only override what differs from defaults in values.yaml</span>
+<span class="kw">replicaCount</span><span class="op">:</span> <span class="num">5</span>
+
+<span class="kw">image</span><span class="op">:</span>
+  <span class="kw">tag</span><span class="op">:</span> <span class="str">"2.1.0"</span>
+
+<span class="kw">ingress</span><span class="op">:</span>
+  <span class="kw">host</span><span class="op">:</span> <span class="str">api.myapp.com</span>
+  <span class="kw">tls</span><span class="op">:</span>
+    <span class="kw">clusterIssuer</span><span class="op">:</span> <span class="str">letsencrypt-prod</span>
+
+<span class="kw">resources</span><span class="op">:</span>
+  <span class="kw">requests</span><span class="op">:</span>
+    <span class="kw">cpu</span><span class="op">:</span> <span class="str">"500m"</span>
+    <span class="kw">memory</span><span class="op">:</span> <span class="str">"512Mi"</span>
+  <span class="kw">limits</span><span class="op">:</span>
+    <span class="kw">cpu</span><span class="op">:</span> <span class="str">"2"</span>
+    <span class="kw">memory</span><span class="op">:</span> <span class="str">"1Gi"</span>
+
+<span class="kw">postgresql</span><span class="op">:</span>
+  <span class="kw">enabled</span><span class="op">:</span> <span class="kw">false</span>           <span class="cm"># use AWS RDS in production</span></pre>
+  </div>
+</div>
+
+
+<!-- 7.6 -->
+<div class="section" id="t7s6">
+  <div class="section-title"><span class="section-num">7.6</span> Helmfile — Managing Multiple Charts</div>
+
+  <p>When you have multiple charts to deploy together (API + monitoring + ingress-controller + cert-manager), <strong>Helmfile</strong> acts as a declarative wrapper — one file describes your entire cluster's desired state.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">helmfile.yaml — full cluster in one declarative file</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">repositories</span><span class="op">:</span>
+  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">ingress-nginx</span>
+    <span class="kw">url</span><span class="op">:</span>  <span class="str">https://kubernetes.github.io/ingress-nginx</span>
+  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">jetstack</span>
+    <span class="kw">url</span><span class="op">:</span>  <span class="str">https://charts.jetstack.io</span>
+
+<span class="kw">releases</span><span class="op">:</span>
+  <span class="cm"># ── Infrastructure layer ─────────────────────────────────────────</span>
+<span class="hl3">  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">ingress-nginx</span>
+    <span class="kw">chart</span><span class="op">:</span> <span class="str">ingress-nginx/ingress-nginx</span>
+    <span class="kw">namespace</span><span class="op">:</span> <span class="str">ingress-nginx</span>
+    <span class="kw">createNamespace</span><span class="op">:</span> <span class="kw">true</span>
+    <span class="kw">values</span><span class="op">:</span>
+      <span class="op">-</span> <span class="str">controller.replicaCount: 2</span>
+
+  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">cert-manager</span>
+    <span class="kw">chart</span><span class="op">:</span> <span class="str">jetstack/cert-manager</span>
+    <span class="kw">namespace</span><span class="op">:</span> <span class="str">cert-manager</span>
+    <span class="kw">createNamespace</span><span class="op">:</span> <span class="kw">true</span>
+    <span class="kw">set</span><span class="op">:</span>
+      <span class="op">-</span> <span class="kw">name</span><span class="op">:</span>  <span class="str">installCRDs</span>
+        <span class="kw">value</span><span class="op">:</span> <span class="str">"true"</span>
+    <span class="kw">needs</span><span class="op">:</span> [<span class="str">ingress-nginx/ingress-nginx</span>]   <span class="cm"># deploy in order</span></span>
+
+  <span class="cm"># ── Application layer ─────────────────────────────────────────────</span>
+<span class="hl">  <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">my-api</span>
+    <span class="kw">chart</span><span class="op">:</span> <span class="str">./myapp</span>
+    <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+    <span class="kw">createNamespace</span><span class="op">:</span> <span class="kw">true</span>
+    <span class="kw">values</span><span class="op">:</span>
+      <span class="op">-</span> <span class="str">values-prod.yaml</span>
+    <span class="kw">needs</span><span class="op">:</span> [<span class="str">cert-manager/cert-manager</span>]</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Helmfile commands</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># Install Helmfile</span>
+<span class="fn">brew</span> install helmfile   <span class="cm"># macOS</span>
+
+<span class="cm"># Preview all changes (like terraform plan)</span>
+<span class="fn">helmfile</span> diff
+
+<span class="cm"># Deploy everything in dependency order</span>
+<span class="fn">helmfile</span> apply
+
+<span class="cm"># Deploy only specific release</span>
+<span class="fn">helmfile</span> apply <span class="op">--selector</span> name=my-api
+
+<span class="cm"># Destroy everything</span>
+<span class="fn">helmfile</span> destroy</pre>
+  </div>
+
+  <div class="callout realworld">
+    <div class="callout-title"><span class="callout-icon">🌍</span> Real-World GitOps Pattern</div>
+    Most production teams store their <code>helmfile.yaml</code> and all <code>values-*.yaml</code> files in Git. A tool like <strong>ArgoCD</strong> watches the repo and runs <code>helmfile apply</code> automatically when the main branch changes. This gives you: full audit trail, PR-based approval, instant rollback (revert the commit), and zero manual <code>kubectl</code> or <code>helm</code> commands in production.
+  </div>
+</div>
+
+
+<!-- ══ SUMMARY ══ -->
+<h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin:48px 0 20px;border-top:1px solid var(--border);padding-top:32px;">
+  What You've Learned — Topics 06 to 07
+</h2>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 06</div>
+    <div class="summary-card-title" style="color:var(--accent1);">Ingress Controllers &amp; TLS</div>
+    <div class="summary-card-body">Why LoadBalancer per service is costly, NGINX Ingress Controller (single LB, many services), host-based and path-based routing rules, pathType (Prefix / Exact), cert-manager installation, ClusterIssuer for Let's Encrypt, ACME HTTP-01 challenge, TLS Secret auto-management, staging vs production issuer, key NGINX annotations</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 07</div>
+    <div class="summary-card-title" style="color:var(--accent3);">Helm — Package Manager</div>
+    <div class="summary-card-body">Helm chart structure (Chart.yaml, values.yaml, templates/, _helpers.tpl), Go template syntax (Values, Release, Chart objects), conditionals in templates, helm install / upgrade / rollback / history, --atomic flag, environment-specific value overrides, OCI registry publishing, Helmfile for declarative multi-chart management, GitOps workflow with ArgoCD</div>
+  </div>
+</div>
+
+<div class="callout tip" style="margin-bottom:48px;">
+  <div class="callout-title"><span class="callout-icon">📅</span> NEXT UP</div>
+  <strong>Topics 08–09:</strong> Resource management &amp; autoscaling — LimitRanges, ResourceQuotas, Horizontal Pod Autoscaler (HPA), Vertical Pod Autoscaler (VPA), cluster autoscaler (Karpenter on AWS). Observability — Prometheus, Grafana, structured logging with Loki, distributed tracing with Tempo/Jaeger.
+</div>
+
+</div><!-- /page -->
+
+<footer>
+  <strong>Docker &amp; Kubernetes for Everyone</strong> — Topics 06–07 &nbsp;·&nbsp;
+  Includes 3 architecture diagrams &nbsp;·&nbsp;
+  Covers NGINX Ingress, cert-manager, Let's Encrypt, Helm charts &amp; Helmfile &nbsp;·&nbsp;
+  Real-world GitOps &amp; AWS patterns
+</footer>
+
+</body>
+</html>

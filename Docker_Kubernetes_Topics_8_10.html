@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker & Kubernetes — Topics 08–10</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:#0d0f1a; --surface:#13162a; --surface2:#1a1e35; --border:#252a45;
+    --text:#e2e8f8; --muted:#7b84ab;
+    --accent1:#3ec9f5; --accent2:#5bf5a0; --accent3:#f7c948;
+    --accent4:#7c6af7; --accent5:#f76c6c; --accent6:#f78b3c;
+    --c-keyword:#c792ea; --c-string:#c3e88d; --c-comment:#697098;
+    --c-number:#f78c6c; --c-func:#82aaff; --c-class:#ffcb6b; --c-operator:#89ddff;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.75;}
+
+  /* COVER */
+  .cover{background:linear-gradient(135deg,#0d0f1a 0%,#0e130a 50%,#0d0f1a 100%);border-bottom:1px solid var(--border);padding:64px 48px 56px;position:relative;overflow:hidden;}
+  .cover::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 80% 20%,rgba(91,245,160,.13) 0%,transparent 70%),radial-gradient(ellipse 45% 40% at 15% 75%,rgba(247,201,72,.10) 0%,transparent 70%);}
+  .cover-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(91,245,160,.12);border:1px solid rgba(91,245,160,.35);border-radius:999px;padding:5px 16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2);letter-spacing:.08em;margin-bottom:24px;}
+  .cover h1{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;line-height:1.1;background:linear-gradient(90deg,#fff 0%,#b5ffe0 55%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;}
+  .cover-sub{font-size:16px;color:var(--muted);margin-bottom:40px;}
+  .cover-table{width:100%;max-width:760px;border-collapse:collapse;font-size:14px;}
+  .cover-table th{background:rgba(91,245,160,.09);color:var(--accent2);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:10px 16px;text-align:left;border:1px solid var(--border);}
+  .cover-table td{padding:10px 16px;border:1px solid var(--border);vertical-align:top;}
+  .cover-table tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+  .cover-table td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent3);font-size:13px;white-space:nowrap;}
+  .cover-note{margin-top:32px;padding:14px 20px;background:rgba(124,106,247,.07);border-left:3px solid var(--accent4);border-radius:0 8px 8px 0;font-size:13px;color:var(--muted);max-width:760px;}
+
+  /* LAYOUT */
+  .page{max-width:960px;margin:0 auto;padding:0 32px;}
+  .breadcrumb{display:flex;align-items:center;gap:8px;padding:16px 0;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);}
+  .breadcrumb a{color:var(--accent1);text-decoration:none;}
+  .breadcrumb span{color:var(--border);}
+
+  /* TOC */
+  .toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 36px;margin:48px 0;}
+  .toc-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+  .toc-group{margin-bottom:18px;}
+  .toc-group-label{font-family:'JetBrains Mono',monospace;font-size:12px;margin-bottom:6px;font-weight:700;}
+  .toc a{display:block;padding:3px 0 3px 16px;font-size:13.5px;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:all .15s;}
+  .toc a:hover{color:var(--text);padding-left:20px;}
+
+  /* TOPIC HEADER */
+  .topic-header{margin:56px 0 36px;padding:32px 36px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);position:relative;overflow:hidden;}
+  .topic-header::after{content:attr(data-num);position:absolute;right:32px;top:50%;transform:translateY(-50%);font-family:'Syne',sans-serif;font-size:120px;font-weight:800;opacity:.04;color:white;pointer-events:none;line-height:1;}
+  .topic-eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;}
+  .topic-header h2{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:6px;}
+  .topic-objective{font-size:12.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+
+  .t8 .topic-eyebrow{color:var(--accent2);} .t8{border-top:3px solid var(--accent2);}
+  .t9 .topic-eyebrow{color:var(--accent3);} .t9{border-top:3px solid var(--accent3);}
+  .t10 .topic-eyebrow{color:var(--accent5);} .t10{border-top:3px solid var(--accent5);}
+
+  /* SECTIONS */
+  .section{margin-bottom:48px;}
+  .section-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .section-num{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--muted);}
+
+  /* CALLOUTS */
+  .callout{border-radius:10px;padding:20px 24px;margin:20px 0;font-size:14px;}
+  .callout-title{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .layman   {background:rgba(62,201,245,.07); border:1px solid rgba(62,201,245,.22);}  .layman .callout-title{color:var(--accent1);}
+  .realworld{background:rgba(91,245,160,.07); border:1px solid rgba(91,245,160,.20);}  .realworld .callout-title{color:var(--accent2);}
+  .tip      {background:rgba(247,201,72,.07); border:1px solid rgba(247,201,72,.25);border-left:3px solid var(--accent3);} .tip .callout-title{color:var(--accent3);}
+  .warning  {background:rgba(247,108,108,.07);border:1px solid rgba(247,108,108,.25);border-left:3px solid var(--accent5);} .warning .callout-title{color:var(--accent5);}
+  .important{background:rgba(124,106,247,.07);border:1px solid rgba(124,106,247,.25);border-left:3px solid var(--accent4);} .important .callout-title{color:var(--accent4);}
+  .security {background:rgba(247,139,60,.07); border:1px solid rgba(247,139,60,.25);border-left:3px solid var(--accent6);} .security .callout-title{color:var(--accent6);}
+
+  /* TABLES */
+  .tbl-wrap{overflow-x:auto;margin:20px 0;border-radius:10px;border:1px solid var(--border);}
+  table.data{width:100%;border-collapse:collapse;font-size:13.5px;}
+  table.data th{background:var(--surface2);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);}
+  table.data td{padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;}
+  table.data tr:last-child td{border-bottom:none;}
+  table.data tr:nth-child(even) td{background:rgba(255,255,255,.015);}
+  table.data td:first-child{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--accent3);white-space:nowrap;}
+  table.data td.mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent1);}
+  table.data td.green{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent2);}
+  table.data td.red{color:var(--accent5);}
+
+  /* CODE BLOCKS */
+  .code-block{margin:20px 0;border-radius:10px;border:1px solid var(--border);overflow:hidden;font-family:'JetBrains Mono',monospace;}
+  .code-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11.5px;}
+  .code-lang{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+  .lang-yaml  {background:rgba(91,245,160,.12); color:var(--accent2);}
+  .lang-bash  {background:rgba(247,201,72,.12); color:var(--accent3);}
+  .lang-output{background:rgba(124,106,247,.10);color:var(--accent4);}
+  .lang-promql{background:rgba(247,139,60,.12); color:var(--accent6);}
+  .code-fname{color:var(--muted);font-size:12px;}
+
+  pre{padding:20px 22px;background:#0a0c18;overflow-x:auto;font-size:13px;line-height:1.7;}
+  .kw {color:var(--c-keyword);font-weight:700;} .str{color:var(--c-string);}
+  .cm {color:var(--c-comment);font-style:italic;} .num{color:var(--c-number);}
+  .fn {color:var(--c-func);} .cls{color:var(--c-class);} .op{color:var(--c-operator);}
+  .var{color:#eeffff;}
+  .hl {background:rgba(91,245,160,.08);display:block;margin:0 -22px;padding:0 22px;border-left:3px solid var(--accent2);}
+  .hl2{background:rgba(247,201,72,.08);display:block;margin:0 -22px;padding:0 22px;border-left:3px solid var(--accent3);}
+  .hl3{background:rgba(247,108,108,.08);display:block;margin:0 -22px;padding:0 22px;border-left:3px solid var(--accent5);}
+  .hl4{background:rgba(124,106,247,.08);display:block;margin:0 -22px;padding:0 22px;border-left:3px solid var(--accent4);}
+
+  /* STEPS */
+  .steps{display:flex;flex-direction:column;gap:2px;margin:16px 0;}
+  .step{display:grid;grid-template-columns:40px 1fr;gap:16px;align-items:start;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+  .step:last-child{border-bottom:none;}
+  .step-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
+  .sn1{background:rgba(62,201,245,.2); color:var(--accent1);}
+  .sn2{background:rgba(91,245,160,.15);color:var(--accent2);}
+  .sn3{background:rgba(247,201,72,.15);color:var(--accent3);}
+  .sn4{background:rgba(124,106,247,.15);color:var(--accent4);}
+  .sn5{background:rgba(247,108,108,.15);color:var(--accent5);}
+  .step-body{font-size:14px;padding-top:6px;}
+  .step-label{font-weight:600;margin-bottom:4px;color:var(--text);}
+  .step-desc{color:var(--muted);font-size:13px;}
+
+  /* COMPARE */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0;}
+  .compare-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;}
+  .compare-card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .compare-card ul{padding-left:0;list-style:none;}
+  .compare-card ul li{font-size:13px;color:var(--muted);padding:4px 0 4px 20px;position:relative;}
+  .compare-card ul li::before{content:'·';position:absolute;left:6px;color:var(--muted);}
+
+  /* DIAGRAM */
+  .diagram-wrap{margin:28px 0;border-radius:12px;border:1px solid var(--border);background:var(--surface);overflow:hidden;}
+  .diagram-label{padding:10px 18px;background:var(--surface2);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .diagram-label span{color:var(--accent2);}
+  .diagram-wrap svg{display:block;width:100%;}
+
+  /* METRIC CARDS */
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0;}
+  .metric-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+  .metric-val{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;margin-bottom:4px;}
+  .metric-label{font-size:12px;color:var(--muted);}
+
+  /* SUMMARY */
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:32px 0;}
+  .summary-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;}
+  .summary-card-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px;}
+  .summary-card-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px;}
+  .summary-card-body{font-size:13px;color:var(--muted);line-height:1.6;}
+
+  footer{margin-top:64px;padding:32px 48px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:12.5px;}
+  footer strong{color:var(--accent3);}
+
+  code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;color:var(--accent1);}
+  p{margin-bottom:12px;font-size:14.5px;}
+  h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin:24px 0 12px;color:var(--accent2);}
+  ul.styled{padding-left:0;list-style:none;margin:12px 0;}
+  ul.styled li{padding:6px 0 6px 28px;position:relative;font-size:14px;color:var(--text);border-bottom:1px solid rgba(255,255,255,.03);}
+  ul.styled li::before{content:'▸';position:absolute;left:8px;color:var(--accent2);font-size:11px;top:9px;}
+
+  @media(max-width:640px){.cover h1{font-size:34px;}.cover{padding:40px 24px 36px;}.compare-grid{grid-template-columns:1fr;}.page{padding:0 16px;}}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div style="position:relative;z-index:1;">
+    <div class="cover-badge">☸️ KUBERNETES &nbsp;·&nbsp; TOPICS 08–10 &nbsp;·&nbsp; SCALING · OBSERVABILITY · SECURITY</div>
+    <h1>Autoscaling, Monitoring<br>&amp; RBAC Security</h1>
+    <p class="cover-sub">Make your cluster self-healing and cost-efficient with autoscaling, gain full visibility with Prometheus/Grafana/Loki, and lock down access with RBAC and Network Policies.</p>
+
+    <table class="cover-table">
+      <thead><tr><th>#</th><th>Topic</th><th>Key Concepts</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>TOPIC 08</td>
+          <td>Resource Management &amp; Autoscaling</td>
+          <td>LimitRanges, ResourceQuotas, HPA, VPA, KEDA, Cluster Autoscaler, Karpenter (AWS)</td>
+        </tr>
+        <tr>
+          <td>TOPIC 09</td>
+          <td>Observability — Metrics, Logs &amp; Traces</td>
+          <td>Prometheus, PromQL, Grafana dashboards, Alertmanager, Loki, structured logging, Tempo/Jaeger, OpenTelemetry</td>
+        </tr>
+        <tr>
+          <td>TOPIC 10</td>
+          <td>RBAC &amp; Network Security</td>
+          <td>Roles, ClusterRoles, Bindings, ServiceAccounts, IRSA, NetworkPolicies, Pod Security Standards, Kyverno</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cover-note">
+      📌 &nbsp;Continues from Topics 01–07. Topics 08–10 are the production-readiness layer — a cluster that scales automatically, surfaces problems before users notice, and enforces security by default.
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<div class="breadcrumb">
+  <a href="#">Docker &amp; Kubernetes</a>
+  <span>›</span><span>Topics 08 – 10</span>
+  <span>›</span>
+  <span style="color:var(--accent2);">Autoscaling · Prometheus · Grafana · Loki · RBAC · NetworkPolicy</span>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 32px;">
+    <div class="toc-group" style="--c:var(--accent2);">
+      <div class="toc-group-label" style="color:var(--accent2);">TOPIC 08 — Resource Management &amp; Autoscaling</div>
+      <a href="#t8s1">8.1 Requests, Limits &amp; LimitRanges</a>
+      <a href="#t8s2">8.2 ResourceQuotas per Namespace</a>
+      <a href="#t8s3">8.3 Horizontal Pod Autoscaler (HPA)</a>
+      <a href="#t8s4">8.4 Vertical Pod Autoscaler (VPA)</a>
+      <a href="#t8s5">8.5 Cluster Autoscaler &amp; Karpenter</a>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-label" style="color:var(--accent3);">TOPIC 09 — Observability</div>
+      <a href="#t9s1">9.1 The Three Pillars</a>
+      <a href="#t9s2">9.2 Prometheus &amp; PromQL</a>
+      <a href="#t9s3">9.3 Grafana Dashboards &amp; Alertmanager</a>
+      <a href="#t9s4">9.4 Loki — Log Aggregation</a>
+      <a href="#t9s5">9.5 Distributed Tracing &amp; OpenTelemetry</a>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-label" style="color:var(--accent5);">TOPIC 10 — RBAC &amp; Network Security</div>
+      <a href="#t10s1">10.1 RBAC — Roles &amp; Bindings</a>
+      <a href="#t10s2">10.2 ServiceAccounts &amp; IRSA</a>
+      <a href="#t10s3">10.3 Network Policies</a>
+      <a href="#t10s4">10.4 Pod Security Standards</a>
+      <a href="#t10s5">10.5 Policy Enforcement with Kyverno</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ TOPIC 08 ══════════════════════════════════════════════════════ -->
+<div class="topic-header t8" data-num="08" id="topic08">
+  <div class="topic-eyebrow">TOPIC 08 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>Resource Management &amp; Autoscaling</h2>
+  <p class="topic-objective">Objective — Prevent noisy-neighbour resource starvation, enforce namespace budgets, and build a cluster that scales Pods and Nodes automatically in response to real demand.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span>💡</span> Layman's Explanation</div>
+  Without resource limits a single runaway Pod can eat all cluster CPU and starve every other app — like one table in a restaurant ordering everything on the menu. <strong>Requests</strong> are the minimum you reserve (your table booking), <strong>Limits</strong> are the maximum you're allowed (the menu cap). <strong>HPA</strong> is a waiter who opens more tables when the restaurant fills up, and <strong>Cluster Autoscaler</strong> is the manager who calls in extra staff and opens a new room when even the extra tables are full.
+</div>
+
+
+<!-- 8.1 -->
+<div class="section" id="t8s1">
+  <div class="section-title"><span class="section-num">8.1</span> Requests, Limits &amp; LimitRanges</div>
+
+  <p>Every container should declare <strong>requests</strong> (guaranteed resources, used by the scheduler) and <strong>limits</strong> (hard caps enforced by the kernel). A container that exceeds its memory limit is OOM-killed; one that exceeds CPU is throttled.</p>
+
+  <!-- DIAGRAM 1 – Requests vs Limits on a Node -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 01</span> — Requests vs Limits: scheduler packing and kernel enforcement on a Node</div>
+    <svg viewBox="0 0 840 280" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Node box -->
+      <rect x="20" y="30" width="800" height="220" rx="12" fill="#080e1a" stroke="#252a45" stroke-width="1.5"/>
+      <text x="420" y="52" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" letter-spacing="2">NODE — 4 CPU cores / 8 GiB RAM available</text>
+
+      <!-- CPU bar -->
+      <text x="36" y="80" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9">CPU</text>
+      <rect x="72" y="65" width="728" height="22" rx="4" fill="#0d1520" stroke="#252a45" stroke-width="1"/>
+      <!-- Requests filled (sum of all container requests) -->
+      <rect x="72" y="65" width="420" height="22" rx="4" fill="#0e2535" stroke="none"/>
+      <!-- Limits region -->
+      <rect x="72" y="65" width="600" height="22" rx="4" fill="none" stroke="#3ec9f5" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="280" y="80" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Requests (2.1 cores reserved)</text>
+      <text x="540" y="80" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Limits boundary (3 cores max)</text>
+
+      <!-- RAM bar -->
+      <text x="36" y="120" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9">RAM</text>
+      <rect x="72" y="105" width="728" height="22" rx="4" fill="#0d1520" stroke="#252a45" stroke-width="1"/>
+      <rect x="72" y="105" width="364" height="22" rx="4" fill="#0e2030" stroke="none"/>
+      <rect x="72" y="105" width="546" height="22" rx="4" fill="none" stroke="#5bf5a0" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="260" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Requests (3.0 GiB reserved)</text>
+      <text x="460" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Limits (4.5 GiB max)</text>
+
+      <!-- Pods -->
+      <rect x="36"  y="148" width="155" height="80" rx="8" fill="#091525" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="113" y="170" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">Pod: api-1</text>
+      <text x="113" y="187" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">req: 200m / 256Mi</text>
+      <text x="113" y="202" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">lim: 500m / 512Mi</text>
+      <text x="113" y="218" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">QoS: Burstable</text>
+
+      <rect x="204" y="148" width="155" height="80" rx="8" fill="#091525" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="281" y="170" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">Pod: api-2</text>
+      <text x="281" y="187" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">req: 200m / 256Mi</text>
+      <text x="281" y="202" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">lim: 500m / 512Mi</text>
+      <text x="281" y="218" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">QoS: Burstable</text>
+
+      <rect x="372" y="148" width="175" height="80" rx="8" fill="#0a2515" stroke="#5bf5a0" stroke-width="1.5"/>
+      <text x="459" y="170" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">Pod: postgres-0</text>
+      <text x="459" y="187" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">req: 1000m / 2Gi</text>
+      <text x="459" y="202" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">lim: 1000m / 2Gi</text>
+      <text x="459" y="218" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">QoS: Guaranteed ⭐</text>
+
+      <rect x="560" y="148" width="155" height="80" rx="8" fill="#1a0808" stroke="#f76c6c" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="637" y="170" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">Pod: job-worker</text>
+      <text x="637" y="187" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">req: — / —</text>
+      <text x="637" y="202" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">lim: — / —</text>
+      <text x="637" y="218" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">QoS: BestEffort ⚠</text>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>QoS Class</th><th>Condition</th><th>Eviction Priority</th><th>Use For</th></tr></thead>
+      <tbody>
+        <tr><td>Guaranteed</td><td>requests == limits for all containers</td><td class="green">Last evicted</td><td>Databases, critical services</td></tr>
+        <tr><td>Burstable</td><td>requests &lt; limits, or only requests set</td><td class="mono">Middle</td><td>Most web apps &amp; APIs</td></tr>
+        <tr><td>BestEffort</td><td>No requests or limits set</td><td class="red">First evicted</td><td>Avoid in production</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>A <strong>LimitRange</strong> sets per-Pod/container defaults and maxima so developers can't accidentally deploy without limits:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">limitrange.yaml</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">LimitRange</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">default-limits</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">limits</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">type</span><span class="op">:</span> <span class="str">Container</span>
+<span class="hl">      <span class="kw">default</span><span class="op">:</span>             <span class="cm"># applied when limits not specified</span>
+        <span class="kw">cpu</span><span class="op">:</span>    <span class="str">"500m"</span>
+        <span class="kw">memory</span><span class="op">:</span> <span class="str">"256Mi"</span>
+      <span class="kw">defaultRequest</span><span class="op">:</span>      <span class="cm"># applied when requests not specified</span>
+        <span class="kw">cpu</span><span class="op">:</span>    <span class="str">"100m"</span>
+        <span class="kw">memory</span><span class="op">:</span> <span class="str">"128Mi"</span></span>
+      <span class="kw">max</span><span class="op">:</span>                 <span class="cm"># hard ceiling per container</span>
+        <span class="kw">cpu</span><span class="op">:</span>    <span class="str">"2"</span>
+        <span class="kw">memory</span><span class="op">:</span> <span class="str">"2Gi"</span>
+      <span class="kw">min</span><span class="op">:</span>
+        <span class="kw">cpu</span><span class="op">:</span>    <span class="str">"50m"</span>
+        <span class="kw">memory</span><span class="op">:</span> <span class="str">"64Mi"</span></pre>
+  </div>
+</div>
+
+
+<!-- 8.2 -->
+<div class="section" id="t8s2">
+  <div class="section-title"><span class="section-num">8.2</span> ResourceQuotas per Namespace</div>
+
+  <p>A <strong>ResourceQuota</strong> caps the total resources a namespace can consume — preventing one team's workloads from monopolising the cluster.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">resourcequota.yaml</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">ResourceQuota</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">team-quota</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">team-alpha</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">hard</span><span class="op">:</span>
+    <span class="cm"># Compute</span>
+<span class="hl">    <span class="kw">requests.cpu</span><span class="op">:</span>    <span class="str">"4"</span>         <span class="cm"># sum of all Pod requests</span>
+    <span class="kw">requests.memory</span><span class="op">:</span> <span class="str">"8Gi"</span>
+    <span class="kw">limits.cpu</span><span class="op">:</span>      <span class="str">"8"</span>
+    <span class="kw">limits.memory</span><span class="op">:</span>   <span class="str">"16Gi"</span></span>
+    <span class="cm"># Object counts</span>
+    <span class="kw">pods</span><span class="op">:</span>                  <span class="str">"20"</span>
+    <span class="kw">services</span><span class="op">:</span>              <span class="str">"10"</span>
+    <span class="kw">persistentvolumeclaims</span><span class="op">:</span> <span class="str">"5"</span>
+    <span class="kw">secrets</span><span class="op">:</span>               <span class="str">"20"</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">Terminal — check quota usage</span><span class="code-lang lang-bash">Bash</span></div>
+    <pre><span class="fn">kubectl</span> describe resourcequota team-quota <span class="op">-n</span> team-alpha
+
+<span class="cm"># Output:</span>
+<span class="str">Name:            team-quota</span>
+<span class="str">Resource         Used    Hard</span>
+<span class="str">--------         ----    ----</span>
+<span class="str">limits.cpu       3200m   8</span>
+<span class="str">limits.memory    6Gi     16Gi</span>
+<span class="str">pods             12      20</span>
+<span class="str">requests.cpu     1600m   4</span>
+<span class="str">requests.memory  3Gi     8Gi</span></pre>
+  </div>
+</div>
+
+
+<!-- 8.3 -->
+<div class="section" id="t8s3">
+  <div class="section-title"><span class="section-num">8.3</span> Horizontal Pod Autoscaler (HPA)</div>
+
+  <p>The <strong>HPA</strong> watches a metric (CPU, memory, or custom) and automatically adjusts the number of Pod replicas to keep the metric at a target. It queries the <strong>Metrics Server</strong> every 15 seconds.</p>
+
+  <!-- DIAGRAM 2 – HPA control loop -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 02</span> — HPA control loop: metric → calculation → scale Deployment</div>
+    <svg viewBox="0 0 840 200" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 24px;">
+      <!-- Metrics Server -->
+      <rect x="20" y="60" width="148" height="80" rx="10" fill="#0a1020" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="94" y="90" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Metrics Server</text>
+      <text x="94" y="108" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">scrapes kubelet</text>
+      <text x="94" y="123" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">CPU / memory / s</text>
+
+      <line x1="168" y1="100" x2="206" y2="100" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="206,95 216,100 206,105" fill="#3ec9f5"/>
+      <text x="187" y="90" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">query</text>
+
+      <!-- HPA -->
+      <rect x="216" y="50" width="168" height="100" rx="10" fill="#0a1828" stroke="#5bf5a0" stroke-width="2"/>
+      <text x="300" y="80" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">HPA Controller</text>
+      <text x="300" y="98" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">currentCPU = 80%</text>
+      <text x="300" y="113" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">targetCPU  = 50%</text>
+      <text x="300" y="130" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">⇒ scale to ceil(3 × 80/50) = 5</text>
+
+      <line x1="384" y1="100" x2="422" y2="100" stroke="#5bf5a0" stroke-width="1.5"/>
+      <polygon points="422,95 432,100 422,105" fill="#5bf5a0"/>
+      <text x="403" y="90" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">patch</text>
+
+      <!-- Deployment -->
+      <rect x="432" y="60" width="148" height="80" rx="10" fill="#0a1520" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="506" y="90" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Deployment</text>
+      <text x="506" y="108" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">replicas: 3 → 5</text>
+      <text x="506" y="123" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">2 new Pods created</text>
+
+      <line x1="580" y1="100" x2="618" y2="100" stroke="#7c6af7" stroke-width="1.5"/>
+      <polygon points="618,95 628,100 618,105" fill="#7c6af7"/>
+
+      <!-- Pods group -->
+      <rect x="628" y="48" width="192" height="104" rx="10" fill="#080e1a" stroke="#252a45" stroke-width="1"/>
+      <text x="724" y="68" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Running Pods</text>
+      <rect x="638" y="76" width="50" height="30" rx="5" fill="#0e2535" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="663" y="96" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">pod-1</text>
+      <rect x="695" y="76" width="50" height="30" rx="5" fill="#0e2535" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="720" y="96" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">pod-2</text>
+      <rect x="752" y="76" width="50" height="30" rx="5" fill="#0e2535" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="777" y="96" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">pod-3</text>
+      <rect x="660" y="113" width="50" height="30" rx="5" fill="#0a2015" stroke="#5bf5a0" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="685" y="133" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">pod-4 ✨</text>
+      <rect x="720" y="113" width="50" height="30" rx="5" fill="#0a2015" stroke="#5bf5a0" stroke-width="1" stroke-dasharray="3,2"/>
+      <text x="745" y="133" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">pod-5 ✨</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">hpa.yaml — CPU + memory + custom metric</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">autoscaling/v2</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">HorizontalPodAutoscaler</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">api-hpa</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">scaleTargetRef</span><span class="op">:</span>
+    <span class="kw">apiVersion</span><span class="op">:</span> <span class="str">apps/v1</span>
+    <span class="kw">kind</span><span class="op">:</span> <span class="str">Deployment</span>
+    <span class="kw">name</span><span class="op">:</span> <span class="str">api-deployment</span>
+  <span class="kw">minReplicas</span><span class="op">:</span> <span class="num">2</span>
+  <span class="kw">maxReplicas</span><span class="op">:</span> <span class="num">20</span>
+  <span class="kw">metrics</span><span class="op">:</span>
+<span class="hl">    <span class="op">-</span> <span class="kw">type</span><span class="op">:</span> <span class="str">Resource</span>               <span class="cm"># scale on CPU</span>
+      <span class="kw">resource</span><span class="op">:</span>
+        <span class="kw">name</span><span class="op">:</span> <span class="str">cpu</span>
+        <span class="kw">target</span><span class="op">:</span>
+          <span class="kw">type</span><span class="op">:</span>               <span class="str">Utilization</span>
+          <span class="kw">averageUtilization</span><span class="op">:</span> <span class="num">50</span>   <span class="cm"># 50% of requests.cpu</span></span>
+    <span class="op">-</span> <span class="kw">type</span><span class="op">:</span> <span class="str">Resource</span>               <span class="cm"># scale on memory</span>
+      <span class="kw">resource</span><span class="op">:</span>
+        <span class="kw">name</span><span class="op">:</span> <span class="str">memory</span>
+        <span class="kw">target</span><span class="op">:</span>
+          <span class="kw">type</span><span class="op">:</span>               <span class="str">Utilization</span>
+          <span class="kw">averageUtilization</span><span class="op">:</span> <span class="num">70</span>
+  <span class="kw">behavior</span><span class="op">:</span>
+    <span class="kw">scaleDown</span><span class="op">:</span>
+      <span class="kw">stabilizationWindowSeconds</span><span class="op">:</span> <span class="num">300</span>  <span class="cm"># wait 5m before scaling down</span>
+    <span class="kw">scaleUp</span><span class="op">:</span>
+      <span class="kw">stabilizationWindowSeconds</span><span class="op">:</span> <span class="num">30</span>   <span class="cm"># react quickly to spikes</span></pre>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title"><span>⚡</span> HPA Requires Requests to Be Set</div>
+    HPA calculates utilisation as <code>currentUsage / requests</code>. If a container has no <code>requests.cpu</code> set, HPA cannot calculate utilisation and will refuse to scale. This is another reason LimitRanges (section 8.1) are essential — they ensure defaults exist.
+  </div>
+</div>
+
+
+<!-- 8.4 -->
+<div class="section" id="t8s4">
+  <div class="section-title"><span class="section-num">8.4</span> Vertical Pod Autoscaler (VPA)</div>
+
+  <p>While HPA adds more Pods, <strong>VPA</strong> adjusts the CPU/memory requests of existing Pods over time based on observed usage. It answers: "are my resource requests even right?"</p>
+
+  <div class="compare-grid">
+    <div class="compare-card" style="border-top:3px solid var(--accent1);">
+      <div class="compare-card-title" style="color:var(--accent1);">↔ HPA — Scale Out</div>
+      <ul>
+        <li>Adds/removes Pod replicas</li>
+        <li>Best for stateless workloads</li>
+        <li>Responds to traffic spikes</li>
+        <li>Works with Deployments</li>
+        <li>Can combine with VPA (carefully)</li>
+      </ul>
+    </div>
+    <div class="compare-card" style="border-top:3px solid var(--accent4);">
+      <div class="compare-card-title" style="color:var(--accent4);">↕ VPA — Scale Up/Down</div>
+      <ul>
+        <li>Adjusts requests/limits of Pods</li>
+        <li>Best for setting right-sized requests</li>
+        <li>Needs Pod restart to apply (usually)</li>
+        <li>Works with StatefulSets too</li>
+        <li>Use in <code>Off</code> mode to just get recommendations</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">vpa.yaml — recommendation mode (safe in production)</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">autoscaling.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">VerticalPodAutoscaler</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">api-vpa</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">targetRef</span><span class="op">:</span>
+    <span class="kw">apiVersion</span><span class="op">:</span> <span class="str">apps/v1</span>
+    <span class="kw">kind</span><span class="op">:</span>       <span class="str">Deployment</span>
+    <span class="kw">name</span><span class="op">:</span>       <span class="str">api-deployment</span>
+<span class="hl">  <span class="kw">updatePolicy</span><span class="op">:</span>
+    <span class="kw">updateMode</span><span class="op">:</span> <span class="str">"Off"</span>      <span class="cm"># only recommend — never restart Pods</span></span>
+    <span class="cm"># Other modes: "Initial" (set on creation), "Auto" (evict + resize)</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">Terminal — read VPA recommendations</span><span class="code-lang lang-bash">Bash</span></div>
+    <pre><span class="fn">kubectl</span> describe vpa api-vpa
+
+<span class="cm"># Output (Recommendation section):</span>
+<span class="str">  Recommendation:</span>
+<span class="str">    Container Recommendations:</span>
+<span class="str">      Container Name: api</span>
+<span class="str">      Lower Bound:   cpu: 50m    memory: 92Mi</span>
+<span class="str">      Target:        cpu: 200m   memory: 210Mi   ← use these</span>
+<span class="str">      Upper Bound:   cpu: 800m   memory: 500Mi</span></pre>
+  </div>
+</div>
+
+
+<!-- 8.5 -->
+<div class="section" id="t8s5">
+  <div class="section-title"><span class="section-num">8.5</span> Cluster Autoscaler &amp; Karpenter</div>
+
+  <p>HPA adds Pods but if no Node has capacity, the Pods stay <code>Pending</code>. The <strong>Cluster Autoscaler</strong> (or <strong>Karpenter</strong> on AWS) watches for pending Pods and provisions new Nodes — and removes underutilised Nodes to save cost.</p>
+
+  <!-- DIAGRAM 3 – Cluster autoscaler flow -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 03</span> — Karpenter node provisioning: Pending Pods → new EC2 Node → Pods scheduled</div>
+    <svg viewBox="0 0 840 190" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Pending pod -->
+      <rect x="20" y="55" width="140" height="80" rx="10" fill="#1a0a0a" stroke="#f76c6c" stroke-width="1.5"/>
+      <text x="90" y="85" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Pod: api-6</text>
+      <text x="90" y="103" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">STATUS: Pending</text>
+      <text x="90" y="120" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">no Node has capacity</text>
+
+      <line x1="160" y1="95" x2="198" y2="95" stroke="#f76c6c" stroke-width="1.5"/>
+      <polygon points="198,90 208,95 198,100" fill="#f76c6c"/>
+      <text x="179" y="85" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">triggers</text>
+
+      <!-- Karpenter -->
+      <rect x="208" y="45" width="178" height="100" rx="10" fill="#0a1820" stroke="#3ec9f5" stroke-width="2"/>
+      <text x="297" y="75" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Karpenter</text>
+      <text x="297" y="93" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">evaluates pod requirements</text>
+      <text x="297" y="108" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">picks optimal instance type</text>
+      <text x="297" y="125" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">calls AWS EC2 API</text>
+
+      <line x1="386" y1="95" x2="424" y2="95" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="424,90 434,95 424,100" fill="#3ec9f5"/>
+      <text x="405" y="85" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">provision</text>
+
+      <!-- New Node -->
+      <rect x="434" y="45" width="175" height="100" rx="10" fill="#081510" stroke="#5bf5a0" stroke-width="1.5"/>
+      <text x="521" y="75" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">New EC2 Node</text>
+      <text x="521" y="93" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">m5.xlarge (4 vCPU, 16 GiB)</text>
+      <text x="521" y="108" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">joins cluster in ~60s</text>
+      <text x="521" y="123" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">~$0.192/hr (spot: $0.06/hr)</text>
+
+      <line x1="609" y1="95" x2="647" y2="95" stroke="#5bf5a0" stroke-width="1.5"/>
+      <polygon points="647,90 657,95 647,100" fill="#5bf5a0"/>
+      <text x="628" y="85" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">schedule</text>
+
+      <!-- Pod running -->
+      <rect x="657" y="55" width="163" height="80" rx="10" fill="#091525" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="738" y="85" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Pod: api-6</text>
+      <text x="738" y="103" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">STATUS: Running ✓</text>
+      <text x="738" y="120" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">on new node</text>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Feature</th><th>Cluster Autoscaler</th><th>Karpenter (AWS)</th></tr></thead>
+      <tbody>
+        <tr><td>Provisioning speed</td><td class="mono">~3-5 minutes</td><td class="green">&lt; 60 seconds</td></tr>
+        <tr><td>Instance selection</td><td>Predefined node groups</td><td class="green">Any matching instance type</td></tr>
+        <tr><td>Spot support</td><td>Via node groups</td><td class="green">Native, automatic fallback</td></tr>
+        <tr><td>Bin-packing</td><td>Limited</td><td class="green">Optimal consolidation</td></tr>
+        <tr><td>Cloud support</td><td class="green">All major clouds</td><td>AWS only (Azure preview)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout realworld">
+    <div class="callout-title"><span>🌍</span> Real-World Cost Pattern</div>
+    Use Karpenter with a <strong>NodePool</strong> that allows both on-demand and Spot instances. For stateless workloads (API pods), Karpenter automatically places them on Spot (70–90% cheaper). For stateful workloads (databases), label them with <code>karpenter.sh/capacity-type: on-demand</code> to avoid interruptions. Teams typically cut EC2 costs 50–70% this way.
+  </div>
+</div>
+
+
+<!-- ══ TOPIC 09 ══════════════════════════════════════════════════════ -->
+<div class="topic-header t9" data-num="09" id="topic09">
+  <div class="topic-eyebrow">TOPIC 09 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>Observability — Metrics, Logs &amp; Traces</h2>
+  <p class="topic-objective">Objective — Know what's happening in your cluster at all times. Collect metrics with Prometheus, visualise with Grafana, aggregate logs with Loki, and trace requests end-to-end with OpenTelemetry.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span>💡</span> Layman's Explanation</div>
+  Running a production cluster without observability is like flying a plane with no instruments. <strong>Metrics</strong> are the altitude and speed gauges (CPU, memory, request rate). <strong>Logs</strong> are the flight recorder — every event written down. <strong>Traces</strong> are the GPS track — following a single passenger's journey from check-in through security through boarding to their seat, across multiple services.
+</div>
+
+
+<!-- 9.1 -->
+<div class="section" id="t9s1">
+  <div class="section-title"><span class="section-num">9.1</span> The Three Pillars of Observability</div>
+
+  <!-- DIAGRAM 4 – Three pillars -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 04</span> — The three pillars and the tools that implement each</div>
+    <svg viewBox="0 0 840 200" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:24px 30px;">
+      <!-- Metrics -->
+      <rect x="20"  y="20" width="240" height="160" rx="12" fill="#0a1520" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="140" y="52"  fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" text-anchor="middle">Metrics</text>
+      <text x="140" y="72"  fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9"  text-anchor="middle">What is the system doing?</text>
+      <text x="140" y="96"  fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Prometheus</text>
+      <text x="140" y="114" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Grafana</text>
+      <text x="140" y="132" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Alertmanager</text>
+      <text x="140" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">CPU / req rate / error rate / latency</text>
+
+      <!-- Logs -->
+      <rect x="300" y="20" width="240" height="160" rx="12" fill="#0a1520" stroke="#f7c948" stroke-width="1.5"/>
+      <text x="420" y="52"  fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" text-anchor="middle">Logs</text>
+      <text x="420" y="72"  fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9"  text-anchor="middle">What happened?</text>
+      <text x="420" y="96"  fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Loki</text>
+      <text x="420" y="114" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Promtail / Alloy</text>
+      <text x="420" y="132" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Grafana (LogQL)</text>
+      <text x="420" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">structured JSON logs, error stacks</text>
+
+      <!-- Traces -->
+      <rect x="580" y="20" width="240" height="160" rx="12" fill="#0a1520" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="700" y="52"  fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" text-anchor="middle">Traces</text>
+      <text x="700" y="72"  fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9"  text-anchor="middle">Where did time go?</text>
+      <text x="700" y="96"  fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">OpenTelemetry</text>
+      <text x="700" y="114" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Tempo / Jaeger</text>
+      <text x="700" y="132" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Grafana (TraceQL)</text>
+      <text x="700" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">request spans across services</text>
+    </svg>
+  </div>
+</div>
+
+
+<!-- 9.2 -->
+<div class="section" id="t9s2">
+  <div class="section-title"><span class="section-num">9.2</span> Prometheus &amp; PromQL</div>
+
+  <p><strong>Prometheus</strong> scrapes HTTP <code>/metrics</code> endpoints on a schedule and stores time-series data. It discovers targets automatically via Kubernetes service discovery. <strong>PromQL</strong> is its query language.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">Terminal — install kube-prometheus-stack (the standard)</span><span class="code-lang lang-bash">Bash</span></div>
+    <pre><span class="fn">helm</span> repo add prometheus-community \
+  https://prometheus-community.github.io/helm-charts
+<span class="fn">helm</span> repo update
+
+<span class="cm"># Installs: Prometheus + Grafana + Alertmanager + kube-state-metrics</span>
+<span class="cm">#           + node-exporter + pre-built K8s dashboards</span>
+<span class="fn">helm</span> install kube-prometheus \
+  prometheus-community/kube-prometheus-stack \
+  <span class="op">--namespace</span> monitoring \
+  <span class="op">--create-namespace</span> \
+  <span class="op">-f</span> prometheus-values.yaml</pre>
+  </div>
+
+  <p>To expose your own app metrics, add a <code>/metrics</code> endpoint (use a Prometheus client library) and create a <strong>ServiceMonitor</strong>:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">servicemonitor.yaml — tell Prometheus to scrape your app</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">monitoring.coreos.com/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">ServiceMonitor</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">api-metrics</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+  <span class="kw">labels</span><span class="op">:</span>
+    <span class="kw">release</span><span class="op">:</span> <span class="str">kube-prometheus</span>   <span class="cm"># must match Prometheus selector</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">selector</span><span class="op">:</span>
+    <span class="kw">matchLabels</span><span class="op">:</span>
+      <span class="kw">app</span><span class="op">:</span> <span class="str">api</span>
+  <span class="kw">endpoints</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">port</span><span class="op">:</span>     <span class="str">http</span>
+<span class="hl">      <span class="kw">path</span><span class="op">:</span>     <span class="str">/metrics</span>       <span class="cm"># your app's metrics endpoint</span>
+      <span class="kw">interval</span><span class="op">:</span> <span class="str">15s</span></span></pre>
+  </div>
+
+  <h3>Essential PromQL Queries</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">PromQL — production queries you'll use daily</span><span class="code-lang lang-promql">PromQL</span></div>
+    <pre><span class="cm"># CPU usage % per Pod (across all pods in production namespace)</span>
+<span class="fn">sum</span>(<span class="fn">rate</span>(container_cpu_usage_seconds_total{
+  namespace=<span class="str">"production"</span>
+}[<span class="num">5m</span>])) <span class="kw">by</span> (pod) <span class="op">/</span>
+<span class="fn">sum</span>(kube_pod_container_resource_requests{
+  resource=<span class="str">"cpu"</span>, namespace=<span class="str">"production"</span>
+}) <span class="kw">by</span> (pod) <span class="op">*</span> <span class="num">100</span>
+
+<span class="cm"># Request error rate (5xx responses per second)</span>
+<span class="fn">sum</span>(<span class="fn">rate</span>(http_requests_total{
+  status=~<span class="str">"5.."</span>, job=<span class="str">"api"</span>
+}[<span class="num">5m</span>]))
+
+<span class="cm"># P95 request latency</span>
+<span class="fn">histogram_quantile</span>(<span class="num">0.95</span>,
+  <span class="fn">sum</span>(<span class="fn">rate</span>(http_request_duration_seconds_bucket{
+    job=<span class="str">"api"</span>
+  }[<span class="num">5m</span>])) <span class="kw">by</span> (le)
+)
+
+<span class="cm"># Pods not running</span>
+<span class="fn">kube_pod_status_phase</span>{phase!~<span class="str">"Running|Succeeded"</span>} <span class="op">==</span> <span class="num">1</span>
+
+<span class="cm"># Memory usage vs limits (OOM risk indicator)</span>
+<span class="fn">container_memory_working_set_bytes</span> <span class="op">/</span>
+<span class="fn">kube_pod_container_resource_limits</span>{resource=<span class="str">"memory"</span>} <span class="op">*</span> <span class="num">100</span></pre>
+  </div>
+</div>
+
+
+<!-- 9.3 -->
+<div class="section" id="t9s3">
+  <div class="section-title"><span class="section-num">9.3</span> Grafana Dashboards &amp; Alertmanager</div>
+
+  <p><strong>Grafana</strong> connects to Prometheus (and Loki, Tempo) as data sources and renders dashboards. The <code>kube-prometheus-stack</code> Helm chart ships with pre-built dashboards covering node resources, Pod states, and K8s API server metrics.</p>
+
+  <div class="callout tip">
+    <div class="callout-title"><span>⚡</span> Import Community Dashboards</div>
+    Visit <strong>grafana.com/dashboards</strong> and import by ID. Essential ones: <code>315</code> (Kubernetes cluster overview), <code>6417</code> (Pod resources), <code>13332</code> (Node Exporter full), <code>14584</code> (NGINX Ingress). Import by going to Dashboards → Import → paste the ID.
+  </div>
+
+  <p>Define alerting rules with <strong>PrometheusRule</strong> — Alertmanager routes them to Slack, PagerDuty, email, etc.:</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">prometheusrule.yaml — production alerts</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">monitoring.coreos.com/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">PrometheusRule</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">api-alerts</span>
+  <span class="kw">labels</span><span class="op">:</span>
+    <span class="kw">release</span><span class="op">:</span> <span class="str">kube-prometheus</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">groups</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">api.rules</span>
+      <span class="kw">rules</span><span class="op">:</span>
+<span class="hl">        <span class="op">-</span> <span class="kw">alert</span><span class="op">:</span> <span class="str">HighErrorRate</span>
+          <span class="kw">expr</span><span class="op">:</span> <span class="str">|
+            sum(rate(http_requests_total{status=~"5..",job="api"}[5m]))
+            / sum(rate(http_requests_total{job="api"}[5m])) > 0.05</span>
+          <span class="kw">for</span><span class="op">:</span> <span class="str">2m</span>
+          <span class="kw">labels</span><span class="op">:</span>
+            <span class="kw">severity</span><span class="op">:</span> <span class="str">critical</span>
+          <span class="kw">annotations</span><span class="op">:</span>
+            <span class="kw">summary</span><span class="op">:</span> <span class="str">"API error rate > 5% for 2 minutes"</span></span>
+
+        <span class="op">-</span> <span class="kw">alert</span><span class="op">:</span> <span class="str">PodCrashLooping</span>
+          <span class="kw">expr</span><span class="op">:</span> <span class="str">increase(kube_pod_container_status_restarts_total[15m]) > 3</span>
+          <span class="kw">for</span><span class="op">:</span> <span class="str">5m</span>
+          <span class="kw">labels</span><span class="op">:</span>
+            <span class="kw">severity</span><span class="op">:</span> <span class="str">warning</span></pre>
+  </div>
+</div>
+
+
+<!-- 9.4 -->
+<div class="section" id="t9s4">
+  <div class="section-title"><span class="section-num">9.4</span> Loki — Log Aggregation</div>
+
+  <p><strong>Loki</strong> is Prometheus for logs. Unlike Elasticsearch, it indexes only labels (not full text) — making it dramatically cheaper. <strong>Promtail</strong> (or the newer <strong>Grafana Alloy</strong>) runs as a DaemonSet on every Node, tails container logs, and ships them to Loki.</p>
+
+  <!-- DIAGRAM 5 – Loki pipeline -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 05</span> — Loki log pipeline: Pod stdout → Promtail → Loki → Grafana</div>
+    <svg viewBox="0 0 840 170" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 24px;">
+      <!-- Pods -->
+      <rect x="20" y="45" width="130" height="80" rx="10" fill="#091525" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="85" y="75" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">Pods</text>
+      <text x="85" y="93" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">write to stdout</text>
+      <text x="85" y="108" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">JSON structured logs</text>
+
+      <line x1="150" y1="85" x2="188" y2="85" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="188,80 198,85 188,90" fill="#3ec9f5"/>
+
+      <!-- Promtail DaemonSet -->
+      <rect x="198" y="35" width="168" height="100" rx="10" fill="#0a1020" stroke="#f7c948" stroke-width="1.5"/>
+      <text x="282" y="65" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Promtail</text>
+      <text x="282" y="82" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">DaemonSet (every Node)</text>
+      <text x="282" y="98" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">tails /var/log/pods/</text>
+      <text x="282" y="115" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">adds K8s labels (pod, ns)</text>
+
+      <line x1="366" y1="85" x2="404" y2="85" stroke="#f7c948" stroke-width="1.5"/>
+      <polygon points="404,80 414,85 404,90" fill="#f7c948"/>
+
+      <!-- Loki -->
+      <rect x="414" y="35" width="148" height="100" rx="10" fill="#0a1020" stroke="#f78b3c" stroke-width="1.5"/>
+      <text x="488" y="70" fill="#f78b3c" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Loki</text>
+      <text x="488" y="88" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">stores compressed chunks</text>
+      <text x="488" y="104" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">indexes labels only</text>
+      <text x="488" y="120" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">S3 / GCS backend</text>
+
+      <line x1="562" y1="85" x2="600" y2="85" stroke="#f78b3c" stroke-width="1.5"/>
+      <polygon points="600,80 610,85 600,90" fill="#f78b3c"/>
+
+      <!-- Grafana -->
+      <rect x="610" y="35" width="210" height="100" rx="10" fill="#0a1520" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="715" y="65" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Grafana + LogQL</text>
+      <text x="715" y="82" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">{app="api"} |= "error"</text>
+      <text x="715" y="98" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">filter, parse, aggregate</text>
+      <text x="715" y="114" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">correlate with metrics &amp; traces</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">LogQL — useful log queries in Grafana</span><span class="code-lang lang-promql">LogQL</span></div>
+    <pre><span class="cm"># All errors from the api app</span>
+{app=<span class="str">"api"</span>, namespace=<span class="str">"production"</span>} |= <span class="str">"error"</span>
+
+<span class="cm"># Parse JSON and filter by HTTP status</span>
+{app=<span class="str">"api"</span>} | json | status >= <span class="num">500</span>
+
+<span class="cm"># Count error lines per minute (metric from logs)</span>
+<span class="fn">sum</span>(<span class="fn">rate</span>({app=<span class="str">"api"</span>} |= <span class="str">"error"</span> [<span class="num">1m</span>]))
+
+<span class="cm"># Find slow requests (&gt;1s) from structured logs</span>
+{app=<span class="str">"api"</span>} | json | duration_ms > <span class="num">1000</span>
+  | line_format <span class="str">"{{.method}} {{.path}} {{.duration_ms}}ms"</span></pre>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title"><span>⚡</span> Always Log JSON</div>
+    Plain text logs are nearly useless in Loki. Structure your app's logs as JSON — every field becomes a filterable label. In Node.js use <code>pino</code>, in Python use <code>structlog</code>, in Go use <code>zap</code> or <code>slog</code>. Minimum fields: <code>level</code>, <code>msg</code>, <code>timestamp</code>, <code>requestId</code>, <code>statusCode</code>, <code>durationMs</code>.
+  </div>
+</div>
+
+
+<!-- 9.5 -->
+<div class="section" id="t9s5">
+  <div class="section-title"><span class="section-num">9.5</span> Distributed Tracing &amp; OpenTelemetry</div>
+
+  <p>A single user request may touch 5+ services. <strong>Distributed tracing</strong> follows it end-to-end by propagating a <code>trace-id</code> through HTTP headers and collecting <strong>spans</strong> — each representing work done in one service. <strong>OpenTelemetry</strong> (OTel) is the vendor-neutral standard for instrumentation.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">otel-collector.yaml — central collection &amp; routing</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="cm"># OpenTelemetry Collector deployed as a Deployment in the cluster</span>
+<span class="cm"># Receives spans from apps, processes them, exports to Tempo</span>
+<span class="kw">config</span><span class="op">:</span>
+  <span class="kw">receivers</span><span class="op">:</span>
+    <span class="kw">otlp</span><span class="op">:</span>                        <span class="cm"># standard OTLP protocol</span>
+      <span class="kw">protocols</span><span class="op">:</span>
+        <span class="kw">grpc</span><span class="op">:</span> <span class="cm"># port 4317</span>
+        <span class="kw">http</span><span class="op">:</span> <span class="cm"># port 4318</span>
+
+  <span class="kw">processors</span><span class="op">:</span>
+    <span class="kw">batch</span><span class="op">:</span>                        <span class="cm"># buffer spans before export</span>
+    <span class="kw">memory_limiter</span><span class="op">:</span>
+      <span class="kw">limit_mib</span><span class="op">:</span> <span class="num">400</span>
+<span class="hl">    <span class="kw">k8sattributes</span><span class="op">:</span>               <span class="cm"># auto-attach pod/node labels to spans</span></span>
+
+  <span class="kw">exporters</span><span class="op">:</span>
+    <span class="kw">otlp/tempo</span><span class="op">:</span>
+      <span class="kw">endpoint</span><span class="op">:</span> <span class="str">tempo:4317</span>
+
+  <span class="kw">service</span><span class="op">:</span>
+    <span class="kw">pipelines</span><span class="op">:</span>
+      <span class="kw">traces</span><span class="op">:</span>
+        <span class="kw">receivers</span><span class="op">:</span>  [otlp]
+        <span class="kw">processors</span><span class="op">:</span> [memory_limiter, k8sattributes, batch]
+        <span class="kw">exporters</span><span class="op">:</span>  [otlp/tempo]</pre>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Tool</th><th>Role</th><th>Query Language</th></tr></thead>
+      <tbody>
+        <tr><td>Prometheus</td><td>Metrics storage &amp; evaluation</td><td class="mono">PromQL</td></tr>
+        <tr><td>Grafana</td><td>Dashboards, unified UI for all three pillars</td><td class="mono">PromQL / LogQL / TraceQL</td></tr>
+        <tr><td>Loki</td><td>Log aggregation (label-indexed)</td><td class="mono">LogQL</td></tr>
+        <tr><td>Tempo</td><td>Distributed trace storage</td><td class="mono">TraceQL</td></tr>
+        <tr><td>Alertmanager</td><td>Route alerts → Slack, PagerDuty, email</td><td class="mono">—</td></tr>
+        <tr><td>OpenTelemetry</td><td>Vendor-neutral SDK + collector</td><td class="mono">OTLP protocol</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout realworld">
+    <div class="callout-title"><span>🌍</span> The Grafana Stack on AWS</div>
+    The <strong>grafana/lgtm</strong> Helm stack (Loki + Grafana + Tempo + Mimir) is the modern open-source answer to Datadog. For production, configure Loki and Tempo to use <strong>S3</strong> as the object storage backend — zero EC2 disk for log/trace storage, infinite retention, and pennies per GB. A cluster handling 10k req/s typically costs $20–40/month in S3 storage for 30-day retention.
+  </div>
+</div>
+
+
+<!-- ══ TOPIC 10 ══════════════════════════════════════════════════════ -->
+<div class="topic-header t10" data-num="10" id="topic10">
+  <div class="topic-eyebrow">TOPIC 10 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>RBAC &amp; Network Security</h2>
+  <p class="topic-objective">Objective — Apply least-privilege access control so humans and services can only do what they need, and isolate workloads at the network level so a compromised Pod cannot reach everything.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span>💡</span> Layman's Explanation</div>
+  An office building has key cards (RBAC) — the cleaner can open the cleaning cupboard but not the server room. The building also has fire doors (Network Policies) — even if someone bypasses the key card, they can't get from reception to the data centre without going through another locked door. Kubernetes needs both: access control for the API (RBAC) and network-level isolation between Pods (NetworkPolicy).
+</div>
+
+
+<!-- 10.1 -->
+<div class="section" id="t10s1">
+  <div class="section-title"><span class="section-num">10.1</span> RBAC — Roles &amp; Bindings</div>
+
+  <!-- DIAGRAM 6 – RBAC relationships -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 06</span> — RBAC: Subject → Binding → Role → Resources (verbs)</div>
+    <svg viewBox="0 0 840 210" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Subject -->
+      <rect x="20" y="55" width="148" height="100" rx="10" fill="#0a1020" stroke="#f7c948" stroke-width="1.5"/>
+      <text x="94" y="83" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Subject</text>
+      <text x="94" y="103" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">User: alice</text>
+      <text x="94" y="120" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Group: devs</text>
+      <text x="94" y="137" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">ServiceAccount: api-sa</text>
+
+      <line x1="168" y1="105" x2="206" y2="105" stroke="#f7c948" stroke-width="1.5"/>
+      <polygon points="206,100 216,105 206,110" fill="#f7c948"/>
+
+      <!-- Binding -->
+      <rect x="216" y="55" width="168" height="100" rx="10" fill="#0a1020" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="300" y="83" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">RoleBinding</text>
+      <text x="300" y="103" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">(namespace-scoped)</text>
+      <text x="300" y="123" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">— or —</text>
+      <text x="300" y="140" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">ClusterRoleBinding</text>
+
+      <line x1="384" y1="105" x2="422" y2="105" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="422,100 432,105 422,110" fill="#3ec9f5"/>
+
+      <!-- Role -->
+      <rect x="432" y="55" width="168" height="100" rx="10" fill="#0a1020" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="516" y="83" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Role</text>
+      <text x="516" y="103" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">(namespace-scoped)</text>
+      <text x="516" y="123" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">— or —</text>
+      <text x="516" y="140" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">ClusterRole</text>
+
+      <line x1="600" y1="105" x2="638" y2="105" stroke="#7c6af7" stroke-width="1.5"/>
+      <polygon points="638,100 648,105 638,110" fill="#7c6af7"/>
+
+      <!-- Rules -->
+      <rect x="648" y="30" width="172" height="150" rx="10" fill="#0a1020" stroke="#5bf5a0" stroke-width="1.5"/>
+      <text x="734" y="58" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Rules (verbs)</text>
+      <text x="734" y="78" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">resources: pods</text>
+      <text x="734" y="96" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">get list watch</text>
+      <text x="734" y="118" fill="#c3e88d" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">resources: deployments</text>
+      <text x="734" y="136" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">get list watch</text>
+      <text x="734" y="158" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">NOT: create delete</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">rbac.yaml — read-only developer role in production</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="cm"># ── Role: read-only access to Pods and logs in one namespace ──────</span>
+<span class="kw">apiVersion</span><span class="op">:</span> <span class="str">rbac.authorization.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Role</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">dev-readonly</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">rules</span><span class="op">:</span>
+<span class="hl">  <span class="op">-</span> <span class="kw">apiGroups</span><span class="op">:</span> [<span class="str">""</span>]
+    <span class="kw">resources</span><span class="op">:</span> [<span class="str">pods</span>, <span class="str">pods/log</span>, <span class="str">services</span>, <span class="str">events</span>]
+    <span class="kw">verbs</span><span class="op">:</span>     [<span class="str">get</span>, <span class="str">list</span>, <span class="str">watch</span>]</span>
+  <span class="op">-</span> <span class="kw">apiGroups</span><span class="op">:</span> [<span class="str">apps</span>]
+    <span class="kw">resources</span><span class="op">:</span> [<span class="str">deployments</span>, <span class="str">replicasets</span>]
+    <span class="kw">verbs</span><span class="op">:</span>     [<span class="str">get</span>, <span class="str">list</span>, <span class="str">watch</span>]
+<span class="op">---</span>
+<span class="cm"># ── RoleBinding: bind the role to a user ──────────────────────────</span>
+<span class="kw">apiVersion</span><span class="op">:</span> <span class="str">rbac.authorization.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">RoleBinding</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">dev-readonly-binding</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">subjects</span><span class="op">:</span>
+  <span class="op">-</span> <span class="kw">kind</span><span class="op">:</span> <span class="str">User</span>
+    <span class="kw">name</span><span class="op">:</span> <span class="str">alice@company.com</span>
+    <span class="kw">apiGroup</span><span class="op">:</span> <span class="str">rbac.authorization.k8s.io</span>
+<span class="kw">roleRef</span><span class="op">:</span>
+  <span class="kw">kind</span><span class="op">:</span>     <span class="str">Role</span>
+  <span class="kw">name</span><span class="op">:</span>     <span class="str">dev-readonly</span>
+  <span class="kw">apiGroup</span><span class="op">:</span> <span class="str">rbac.authorization.k8s.io</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">Terminal — test and audit RBAC</span><span class="code-lang lang-bash">Bash</span></div>
+    <pre><span class="cm"># Can alice list pods in production?</span>
+<span class="fn">kubectl</span> auth can-i list pods \
+  <span class="op">--namespace</span> production \
+  <span class="op">--as</span> alice@company.com
+<span class="cm"># yes</span>
+
+<span class="cm"># Can alice delete deployments?</span>
+<span class="fn">kubectl</span> auth can-i delete deployments \
+  <span class="op">--namespace</span> production \
+  <span class="op">--as</span> alice@company.com
+<span class="cm"># no</span>
+
+<span class="cm"># What can the api ServiceAccount do?</span>
+<span class="fn">kubectl</span> auth can-i <span class="op">--list</span> \
+  <span class="op">--namespace</span> production \
+  <span class="op">--as</span> system:serviceaccount:production:api-sa</pre>
+  </div>
+</div>
+
+
+<!-- 10.2 -->
+<div class="section" id="t10s2">
+  <div class="section-title"><span class="section-num">10.2</span> ServiceAccounts &amp; IRSA (AWS)</div>
+
+  <p>Every Pod runs as a <strong>ServiceAccount</strong>. By default it uses the <code>default</code> ServiceAccount which has no permissions (but still gets a mounted token). For AWS, <strong>IRSA</strong> (IAM Roles for Service Accounts) lets a Pod assume an IAM role without any long-lived credentials in the cluster.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">serviceaccount-irsa.yaml — Pod ↔ AWS S3 without secrets</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="cm"># 1. Create a ServiceAccount annotated with the IAM role ARN</span>
+<span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">ServiceAccount</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">api-sa</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+  <span class="kw">annotations</span><span class="op">:</span>
+<span class="hl">    <span class="kw">eks.amazonaws.com/role-arn</span><span class="op">:</span>
+      <span class="str">arn:aws:iam::123456789:role/api-s3-reader</span></span>
+<span class="op">---</span>
+<span class="cm"># 2. Reference the ServiceAccount in the Deployment</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">template</span><span class="op">:</span>
+    <span class="kw">spec</span><span class="op">:</span>
+      <span class="kw">serviceAccountName</span><span class="op">:</span> <span class="str">api-sa</span>   <span class="cm"># Pod gets AWS credentials automatically</span>
+      <span class="kw">containers</span><span class="op">:</span>
+        <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">api</span>
+          <span class="cm"># No AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY needed!</span>
+          <span class="cm"># AWS SDK auto-discovers credentials via OIDC token</span></pre>
+  </div>
+</div>
+
+
+<!-- 10.3 -->
+<div class="section" id="t10s3">
+  <div class="section-title"><span class="section-num">10.3</span> Network Policies</div>
+
+  <p>By default, all Pods in a cluster can talk to all other Pods. <strong>NetworkPolicies</strong> act as a firewall — restricting which Pods can send or receive traffic. They require a CNI plugin that supports them (Calico, Cilium, Weave). The AWS VPC CNI does <em>not</em> support NetworkPolicy — use <strong>Cilium</strong> or the <strong>AWS Network Policy Controller</strong> add-on.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">networkpolicy.yaml — postgres only accepts from api pods</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">NetworkPolicy</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">postgres-ingress</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">podSelector</span><span class="op">:</span>
+    <span class="kw">matchLabels</span><span class="op">:</span>
+      <span class="kw">app</span><span class="op">:</span> <span class="str">postgres</span>             <span class="cm"># this policy applies TO postgres pods</span>
+  <span class="kw">policyTypes</span><span class="op">:</span> [<span class="str">Ingress</span>]
+  <span class="kw">ingress</span><span class="op">:</span>
+<span class="hl">    <span class="op">-</span> <span class="kw">from</span><span class="op">:</span>
+        <span class="op">-</span> <span class="kw">podSelector</span><span class="op">:</span>
+            <span class="kw">matchLabels</span><span class="op">:</span>
+              <span class="kw">app</span><span class="op">:</span> <span class="str">api</span>           <span class="cm"># ONLY api pods may connect</span>
+      <span class="kw">ports</span><span class="op">:</span>
+        <span class="op">-</span> <span class="kw">port</span><span class="op">:</span> <span class="num">5432</span></span>
+<span class="op">---</span>
+<span class="cm"># Default-deny all ingress in the namespace (add first, then allow)</span>
+<span class="kw">apiVersion</span><span class="op">:</span> <span class="str">networking.k8s.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">NetworkPolicy</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span>      <span class="str">default-deny-ingress</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">podSelector</span><span class="op">:</span> {}              <span class="cm"># matches ALL pods</span>
+  <span class="kw">policyTypes</span><span class="op">:</span> [<span class="str">Ingress</span>]
+<span class="hl3">  <span class="cm"># no ingress rules = deny everything by default</span></span></pre>
+  </div>
+</div>
+
+
+<!-- 10.4 -->
+<div class="section" id="t10s4">
+  <div class="section-title"><span class="section-num">10.4</span> Pod Security Standards</div>
+
+  <p><strong>Pod Security Standards</strong> (PSS) replaced PodSecurityPolicies in K8s 1.25. They define three profiles applied at the namespace level via labels:</p>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Profile</th><th>What it blocks</th><th>Enforcement label</th></tr></thead>
+      <tbody>
+        <tr><td>privileged</td><td>Nothing — unrestricted (system namespaces only)</td><td class="mono">pod-security.kubernetes.io/enforce: privileged</td></tr>
+        <tr><td>baseline</td><td>Most known privilege escalations (no host network/PID, no privileged containers)</td><td class="mono">pod-security.kubernetes.io/enforce: baseline</td></tr>
+        <tr><td>restricted</td><td>All of baseline + must run as non-root, drop all capabilities, no /proc writes</td><td class="green">pod-security.kubernetes.io/enforce: restricted</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">namespace.yaml — enforce restricted PSS on production namespace</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Namespace</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">production</span>
+  <span class="kw">labels</span><span class="op">:</span>
+<span class="hl">    <span class="kw">pod-security.kubernetes.io/enforce</span><span class="op">:</span> <span class="str">restricted</span>   <span class="cm"># block non-compliant pods</span>
+    <span class="kw">pod-security.kubernetes.io/warn</span><span class="op">:</span>    <span class="str">restricted</span>   <span class="cm"># warn on kubectl apply</span>
+    <span class="kw">pod-security.kubernetes.io/audit</span><span class="op">:</span>   <span class="str">restricted</span>   <span class="cm"># log violations</span></span></pre>
+  </div>
+</div>
+
+
+<!-- 10.5 -->
+<div class="section" id="t10s5">
+  <div class="section-title"><span class="section-num">10.5</span> Policy Enforcement with Kyverno</div>
+
+  <p><strong>Kyverno</strong> is a Kubernetes-native policy engine. It runs as an admission controller — intercepting every resource create/update and either validating, mutating, or generating resources based on policies written as YAML.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num sn1">V</div>
+      <div class="step-body">
+        <div class="step-label">Validate — block non-compliant resources</div>
+        <div class="step-desc">Reject Pods that don't have resource limits, reject images from non-approved registries, require specific labels on all Deployments.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num sn2">M</div>
+      <div class="step-body">
+        <div class="step-label">Mutate — auto-fix resources on admission</div>
+        <div class="step-desc">Automatically add default labels, inject sidecars, set <code>imagePullPolicy: Always</code> when <code>:latest</code> tag is used.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num sn3">G</div>
+      <div class="step-body">
+        <div class="step-label">Generate — create resources automatically</div>
+        <div class="step-desc">When a new namespace is created, automatically create a default NetworkPolicy, LimitRange, and ResourceQuota inside it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-fname">kyverno-policy.yaml — require resource limits + approved registry</span><span class="code-lang lang-yaml">YAML</span></div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">kyverno.io/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">ClusterPolicy</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">require-limits-and-registry</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">validationFailureAction</span><span class="op">:</span> <span class="str">Enforce</span>     <span class="cm"># block non-compliant (vs Audit)</span>
+  <span class="kw">rules</span><span class="op">:</span>
+<span class="hl">    <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">require-resource-limits</span>
+      <span class="kw">match</span><span class="op">:</span>
+        <span class="kw">resources</span><span class="op">:</span>
+          <span class="kw">kinds</span><span class="op">:</span> [<span class="str">Pod</span>]
+      <span class="kw">validate</span><span class="op">:</span>
+        <span class="kw">message</span><span class="op">:</span> <span class="str">"CPU and memory limits are required on all containers"</span>
+        <span class="kw">pattern</span><span class="op">:</span>
+          <span class="kw">spec</span><span class="op">:</span>
+            <span class="kw">containers</span><span class="op">:</span>
+              <span class="op">-</span> <span class="kw">resources</span><span class="op">:</span>
+                  <span class="kw">limits</span><span class="op">:</span>
+                    <span class="kw">cpu</span><span class="op">:</span>    <span class="str">"?*"</span>
+                    <span class="kw">memory</span><span class="op">:</span> <span class="str">"?*"</span></span>
+
+    <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">approved-registry-only</span>
+      <span class="kw">match</span><span class="op">:</span>
+        <span class="kw">resources</span><span class="op">:</span>
+          <span class="kw">kinds</span><span class="op">:</span> [<span class="str">Pod</span>]
+          <span class="kw">namespaces</span><span class="op">:</span> [<span class="str">production</span>]
+      <span class="kw">validate</span><span class="op">:</span>
+        <span class="kw">message</span><span class="op">:</span> <span class="str">"Images must come from our ECR registry"</span>
+        <span class="kw">pattern</span><span class="op">:</span>
+          <span class="kw">spec</span><span class="op">:</span>
+            <span class="kw">containers</span><span class="op">:</span>
+<span class="hl3">              <span class="op">-</span> <span class="kw">image</span><span class="op">:</span> <span class="str">"123456789.dkr.ecr.eu-west-1.amazonaws.com/*"</span></span></pre>
+  </div>
+
+  <div class="callout security">
+    <div class="callout-title"><span>🔐</span> Security Layering — Defence in Depth</div>
+    No single control is sufficient. Production clusters should layer all of: <strong>RBAC</strong> (who can call the API), <strong>NetworkPolicy</strong> (which pods can communicate), <strong>Pod Security Standards</strong> (what Pods are allowed to do), <strong>Kyverno / OPA</strong> (policy as code, enforced at admission), and <strong>image scanning</strong> (Trivy in CI, ECR scanning at push). Assume each layer will be bypassed individually and design so breaching one still doesn't give an attacker everything.
+  </div>
+</div>
+
+
+<!-- SUMMARY -->
+<h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin:48px 0 20px;border-top:1px solid var(--border);padding-top:32px;">
+  What You've Learned — Topics 08 to 10
+</h2>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 08</div>
+    <div class="summary-card-title" style="color:var(--accent2);">Resource Management &amp; Autoscaling</div>
+    <div class="summary-card-body">Requests vs Limits, QoS classes (Guaranteed / Burstable / BestEffort), LimitRanges for namespace defaults, ResourceQuotas for team budgets, HPA control loop with scale behaviour, VPA for right-sizing (Off mode for recommendations), Karpenter vs Cluster Autoscaler, Spot instance strategies on AWS</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 09</div>
+    <div class="summary-card-title" style="color:var(--accent3);">Observability</div>
+    <div class="summary-card-body">Three pillars (metrics / logs / traces), kube-prometheus-stack Helm install, ServiceMonitor CRD, PromQL (rate, histogram_quantile, aggregations), PrometheusRule for alerts, Alertmanager routing, Loki + Promtail pipeline, LogQL queries, structured JSON logging, OpenTelemetry Collector, Tempo for traces, Grafana as unified UI, S3-backed storage for Loki/Tempo</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 10</div>
+    <div class="summary-card-title" style="color:var(--accent5);">RBAC &amp; Network Security</div>
+    <div class="summary-card-body">Role vs ClusterRole vs binding, RBAC verbs (get list watch create delete), auth can-i for auditing, ServiceAccounts, IRSA for AWS IAM without stored credentials, NetworkPolicy default-deny pattern, Pod Security Standards (privileged / baseline / restricted), Kyverno validate / mutate / generate, approved-registry policy, defence-in-depth security layering</div>
+  </div>
+</div>
+
+<div class="callout tip" style="margin-bottom:48px;">
+  <div class="callout-title"><span>📅</span> NEXT UP</div>
+  <strong>Topics 11–13:</strong> Image scanning &amp; supply-chain security (Trivy, Cosign, SBOM), CI/CD pipelines with GitHub Actions (build → push → deploy), GitOps with ArgoCD and the App-of-Apps pattern, canary &amp; blue-green deployments with Argo Rollouts.
+</div>
+
+</div>
+<footer>
+  <strong>Docker &amp; Kubernetes for Everyone</strong> — Topics 08–10 &nbsp;·&nbsp;
+  Includes 6 architecture diagrams &nbsp;·&nbsp;
+  Covers HPA · VPA · Karpenter · Prometheus · Loki · Tempo · RBAC · NetworkPolicy · Kyverno
+</footer>
+</body>
+</html>

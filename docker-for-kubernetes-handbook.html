@@ -1,0 +1,1668 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker → Kubernetes · A learner's handbook</title>
+<script>document.documentElement.className = document.documentElement.className.replace('no-js','js');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c14;
+  --bg-2:#0d1420;
+  --bg-3:#121b2b;
+  --bg-code:#080e18;
+  --line:#1e2b3f;
+  --line-soft:#16202f;
+  --text:#d8e0ea;
+  --dim:#8595ab;
+  --faint:#566579;
+  --docker:#38bdf8;
+  --docker-deep:#0ea5e9;
+  --k8s:#8aa2ff;
+  --k8s-deep:#6b86f5;
+  --amber:#ffb454;
+  --amber-2:#f0a63a;
+  --teal:#2dd4bf;
+  --rose:#fb7185;
+  --rose-deep:#f43f5e;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --hand:'Caveat',cursive;
+  --sidebar:272px;
+  --maxw:880px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(1200px 600px at 80% -5%, rgba(56,189,248,.06), transparent 60%),
+    radial-gradient(900px 500px at -5% 10%, rgba(138,162,255,.05), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(56,189,248,.28);color:#fff}
+
+/* ---------- layout ---------- */
+.layout{display:grid;grid-template-columns:var(--sidebar) 1fr;align-items:start}
+.content{min-width:0;padding:0 clamp(20px,5vw,72px) 120px}
+.wrap{max-width:var(--maxw);margin:0 auto}
+
+/* ---------- sidebar ---------- */
+.sidebar{
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  border-right:1px solid var(--line);
+  background:linear-gradient(180deg,var(--bg-2),rgba(13,20,32,.75));
+  padding:26px 20px 40px;
+  backdrop-filter:blur(6px);
+}
+.sidebar::-webkit-scrollbar{width:8px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:6px;text-decoration:none}
+.brand-mark{width:34px;height:34px;flex:none}
+.brand-txt{font-family:var(--mono);font-weight:800;font-size:.95rem;letter-spacing:.02em;color:var(--text);line-height:1.2}
+.brand-txt b{color:var(--docker)}
+.brand-txt i{color:var(--k8s);font-style:normal}
+.brand-sub{font-family:var(--hand);color:var(--amber);font-size:1.02rem;margin:2px 0 22px 45px;line-height:1}
+.nav{list-style:none;margin:0;padding:0}
+.nav li{margin:1px 0}
+.nav a{
+  display:flex;gap:10px;align-items:baseline;
+  text-decoration:none;color:var(--dim);
+  font-family:var(--mono);font-size:.82rem;font-weight:500;
+  padding:8px 10px;border-radius:8px;border:1px solid transparent;
+  transition:.15s color,.15s background,.15s border-color;
+}
+.nav a .n{color:var(--faint);font-size:.74rem;min-width:20px;font-weight:700}
+.nav a:hover{color:var(--text);background:rgba(56,189,248,.06)}
+.nav a.active{color:#fff;background:rgba(56,189,248,.1);border-color:rgba(56,189,248,.28)}
+.nav a.active .n{color:var(--docker)}
+.side-foot{margin-top:26px;padding-top:18px;border-top:1px solid var(--line-soft);font-family:var(--mono);font-size:.68rem;color:var(--faint);line-height:1.6}
+
+/* ---------- mobile bar ---------- */
+.topbar{display:none}
+@media(max-width:920px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;z-index:60;inset:0 auto 0 0;width:min(320px,86vw);
+    transform:translateX(-102%);transition:transform .28s ease;
+  }
+  .sidebar.open{transform:none;box-shadow:0 0 0 200vmax rgba(2,5,10,.6)}
+  .topbar{
+    display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;
+    padding:12px 16px;border-bottom:1px solid var(--line);
+    background:rgba(8,12,20,.9);backdrop-filter:blur(8px);
+  }
+  .topbar .brand-txt{font-size:.82rem}
+  .burger{
+    margin-left:auto;background:var(--bg-3);border:1px solid var(--line);color:var(--text);
+    font-family:var(--mono);font-size:.78rem;padding:7px 12px;border-radius:8px;cursor:pointer;
+  }
+  .content{padding:0 18px 100px}
+}
+
+/* ---------- hero ---------- */
+.hero{padding:64px 0 30px;border-bottom:1px solid var(--line-soft)}
+.kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--docker);border:1px solid rgba(56,189,248,.3);border-radius:100px;
+  padding:5px 13px;margin-bottom:22px;background:rgba(56,189,248,.05);
+}
+.kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}
+.hero h1{
+  font-family:var(--mono);font-weight:800;
+  font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;letter-spacing:-.02em;
+  margin:0 0 4px;
+}
+.hero h1 .b{color:var(--docker)}
+.hero h1 .arr{color:var(--faint);font-weight:400;margin:0 .1em}
+.hero h1 .k{color:var(--k8s)}
+.hero-lede{font-size:1.14rem;color:var(--dim);max-width:640px;margin:18px 0 0}
+.hero-lede b{color:var(--text);font-weight:600}
+.hero-hand{font-family:var(--hand);font-size:1.5rem;color:var(--amber);margin:16px 0 0;transform:rotate(-.5deg)}
+.hero-fig{margin:34px 0 6px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,var(--bg-2),var(--bg));padding:8px}
+.hero-fig svg{display:block;width:100%;height:auto}
+
+/* ---------- parts / headings ---------- */
+.part{padding:70px 0 8px;scroll-margin-top:20px;border-top:1px solid var(--line-soft)}
+.part:first-of-type{border-top:none}
+.part-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:10px}
+.part-num{
+  font-family:var(--mono);font-weight:800;font-size:.8rem;color:var(--bg);
+  background:linear-gradient(140deg,var(--docker),var(--k8s));
+  border-radius:9px;padding:6px 9px;line-height:1;margin-top:8px;flex:none;
+  box-shadow:0 4px 16px rgba(56,189,248,.18);
+}
+.part h2{
+  font-family:var(--mono);font-weight:800;font-size:clamp(1.5rem,3.2vw,2rem);
+  line-height:1.14;letter-spacing:-.01em;margin:0;
+}
+.part h2 small{display:block;font-family:var(--hand);font-weight:600;font-size:1.15rem;color:var(--amber);letter-spacing:0;margin-top:3px}
+.part h3{
+  font-family:var(--mono);font-weight:700;font-size:1.16rem;color:var(--text);
+  margin:38px 0 10px;padding-left:13px;border-left:3px solid var(--docker);
+}
+.part h4{font-family:var(--mono);font-weight:700;font-size:.98rem;color:var(--docker);margin:26px 0 6px;letter-spacing:.01em}
+.content p{margin:14px 0}
+.content p b,.content li b{color:#fff;font-weight:600}
+.content a{color:var(--docker);text-underline-offset:3px}
+.content ul,.content ol{margin:14px 0;padding-left:22px}
+.content li{margin:8px 0}
+.content ul li::marker{color:var(--docker)}
+.content ol li::marker{color:var(--k8s);font-family:var(--mono);font-weight:700}
+code{font-family:var(--mono);font-size:.86em;background:rgba(56,189,248,.1);color:#bfe6fb;padding:2px 6px;border-radius:5px;border:1px solid rgba(56,189,248,.14)}
+hr.soft{border:none;border-top:1px solid var(--line-soft);margin:30px 0}
+
+/* ---------- callouts ---------- */
+.callout{
+  border:1px solid var(--line);border-left-width:3px;border-radius:12px;
+  background:var(--bg-2);padding:16px 18px;margin:22px 0;position:relative;
+}
+.callout .tag{
+  display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);
+  font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+  margin-bottom:7px;
+}
+.callout p{margin:6px 0}
+.callout p:first-of-type{margin-top:0}
+.callout .hand{font-family:var(--hand);font-size:1.24rem;line-height:1.45;color:var(--text)}
+.c-note{border-left-color:var(--amber)}
+.c-note .tag{color:var(--amber)}
+.c-insight{border-left-color:var(--docker);background:rgba(56,189,248,.05)}
+.c-insight .tag{color:var(--docker)}
+.c-bridge{border-left-color:var(--k8s);background:rgba(138,162,255,.05)}
+.c-bridge .tag{color:var(--k8s)}
+.c-gotcha{border-left-color:var(--rose);background:rgba(251,113,133,.05)}
+.c-gotcha .tag{color:var(--rose)}
+
+/* ---------- code blocks ---------- */
+.code{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:20px 0;background:var(--bg-code)}
+.code-head{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;border-bottom:1px solid var(--line);
+  background:var(--bg-3);font-family:var(--mono);font-size:.74rem;
+}
+.code-head .lang{color:var(--faint);letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.code-head .file{color:var(--docker);font-weight:600}
+.code-head .bar{width:26px;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--docker),var(--k8s))}
+.copy{
+  margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--dim);
+  font-family:var(--mono);font-size:.68rem;padding:4px 9px;border-radius:6px;cursor:pointer;transition:.15s;
+}
+.copy:hover{color:var(--text);border-color:var(--docker)}
+.copy.done{color:var(--teal);border-color:var(--teal)}
+.code pre{margin:0;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:.83rem;line-height:1.72;color:#cdd7e3}
+.code pre::-webkit-scrollbar{height:9px}
+.code pre::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+.cm{color:#5f7286;font-style:italic}
+.pr{color:var(--teal)}      /* shell prompt marker */
+.kw{color:var(--k8s)}       /* dockerfile keyword */
+.st{color:var(--amber)}     /* string-ish */
+.out{color:var(--faint)}    /* sample output */
+
+/* ---------- annotated code ---------- */
+.anno{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:22px 0;background:var(--bg-code)}
+.anno-top{
+  display:flex;align-items:center;gap:10px;padding:9px 14px;
+  border-bottom:1px solid var(--line);background:var(--bg-3);
+  font-family:var(--mono);font-size:.74rem;
+}
+.anno-top .file{color:var(--k8s);font-weight:700}
+.anno-top .lang{color:var(--faint);text-transform:uppercase;letter-spacing:.06em;margin-left:auto}
+.arow{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);border-top:1px solid var(--line-soft)}
+.arow:first-child{border-top:none}
+.arow:hover{background:rgba(56,189,248,.035)}
+.acode{
+  font-family:var(--mono);font-size:.82rem;line-height:1.7;
+  padding:13px 16px;white-space:pre;overflow-x:auto;color:#cdd7e3;
+  border-right:1px solid var(--line-soft);
+}
+.acode b{color:var(--docker);font-weight:700}
+.acode .kw{color:var(--k8s)}
+.aexp{padding:13px 16px;font-size:.92rem;color:var(--dim);line-height:1.62}
+.aexp b{color:var(--text)}
+.aexp .hand{font-family:var(--hand);font-size:1.12rem;color:var(--amber);display:block;margin-top:5px;line-height:1.35}
+.arow.head{background:var(--bg-3)}
+.arow.head .acode,.arow.head .aexp{font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);font-weight:700;padding-top:8px;padding-bottom:8px}
+@media(max-width:680px){
+  .arow{grid-template-columns:1fr}
+  .acode{border-right:none;border-bottom:1px dashed var(--line-soft)}
+}
+
+/* ---------- tables ---------- */
+.tbl{width:100%;border-collapse:collapse;margin:22px 0;font-size:.9rem;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tbl th{
+  text-align:left;font-family:var(--mono);font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--faint);font-weight:700;padding:11px 14px;background:var(--bg-3);border-bottom:1px solid var(--line);
+}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--dim)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl td b{color:var(--text)}
+.tbl .cd{color:var(--docker);font-weight:600}
+.tbl .ck{color:var(--k8s);font-weight:600}
+.tbl code{font-size:.82em}
+
+/* ---------- pills ---------- */
+.pill{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:100px;letter-spacing:.04em;vertical-align:middle}
+.p-d{color:var(--docker);background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.28)}
+.p-k{color:var(--k8s);background:rgba(138,162,255,.12);border:1px solid rgba(138,162,255,.28)}
+.p-a{color:var(--amber);background:rgba(255,180,84,.1);border:1px solid rgba(255,180,84,.28)}
+
+/* ---------- figures ---------- */
+.fig{margin:26px 0;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--bg-2),var(--bg));padding:20px 16px 8px}
+.fig svg{display:block;width:100%;height:auto}
+.fig-cap{font-family:var(--mono);font-size:.72rem;color:var(--faint);text-align:center;margin:10px 0 6px;letter-spacing:.03em}
+
+/* ---------- scoped checklist cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:22px 0}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--bg-2);padding:16px}
+.card h5{font-family:var(--mono);font-size:.86rem;margin:0 0 8px;color:var(--text);display:flex;align-items:center;gap:8px}
+.card ul{margin:0;padding-left:18px}
+.card li{margin:5px 0;font-size:.88rem;color:var(--dim)}
+.card.learn{border-top:2px solid var(--docker)}
+.card.learn h5{color:var(--docker)}
+.card.skip{border-top:2px solid var(--faint);opacity:.92}
+.card.skip h5{color:var(--faint)}
+.card.later{border-top:2px solid var(--k8s)}
+.card.later h5{color:var(--k8s)}
+
+/* ---------- steps ---------- */
+.steps{counter-reset:s;list-style:none;padding:0;margin:22px 0}
+.steps>li{
+  position:relative;padding:2px 0 22px 46px;margin:0;
+  border-left:1px solid var(--line);
+}
+.steps>li:last-child{border-left-color:transparent;padding-bottom:0}
+.steps>li::before{
+  counter-increment:s;content:counter(s);
+  position:absolute;left:-15px;top:-2px;width:30px;height:30px;border-radius:50%;
+  display:grid;place-items:center;font-family:var(--mono);font-weight:800;font-size:.8rem;
+  background:var(--bg-3);color:var(--docker);border:1px solid var(--line);
+}
+.steps>li h4{margin:2px 0 4px}
+
+/* ---------- reveal ---------- */
+.js .reveal{opacity:0;transform:translateY(16px)}
+.js .reveal.in{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .js .reveal{opacity:1;transform:none}
+}
+
+/* ---------- back to top / footer ---------- */
+.totop{
+  position:fixed;right:20px;bottom:20px;z-index:40;
+  width:44px;height:44px;border-radius:12px;border:1px solid var(--line);
+  background:var(--bg-3);color:var(--docker);font-size:1.1rem;cursor:pointer;
+  display:grid;place-items:center;opacity:0;pointer-events:none;transition:.25s;
+}
+.totop.show{opacity:1;pointer-events:auto}
+.totop:hover{border-color:var(--docker);transform:translateY(-2px)}
+.foot{margin-top:70px;padding-top:26px;border-top:1px solid var(--line);color:var(--faint);font-family:var(--mono);font-size:.76rem;line-height:1.7}
+.foot b{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<!-- mobile top bar -->
+<div class="topbar">
+  <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true" style="width:26px;height:26px">
+    <rect x="6" y="20" width="7" height="7" rx="1" fill="#38bdf8"/><rect x="14" y="20" width="7" height="7" rx="1" fill="#38bdf8"/><rect x="22" y="20" width="7" height="7" rx="1" fill="#8aa2ff"/><rect x="14" y="12" width="7" height="7" rx="1" fill="#8aa2ff"/>
+    <path d="M4 28c4 3 28 3 32 0" stroke="#2dd4bf" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>
+  <span class="brand-txt"><b>docker</b> → <i>k8s</i></span>
+  <button class="burger" id="burger">☰ Contents</button>
+</div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#top">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="18" stroke="#1e2b3f" stroke-width="1.5"/>
+        <rect x="6" y="20" width="7" height="7" rx="1" fill="#38bdf8"/><rect x="14" y="20" width="7" height="7" rx="1" fill="#38bdf8"/><rect x="22" y="20" width="7" height="7" rx="1" fill="#8aa2ff"/><rect x="14" y="12" width="7" height="7" rx="1" fill="#8aa2ff"/>
+        <path d="M4 28c4 3 28 3 32 0" stroke="#2dd4bf" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-txt"><b>docker</b> <i>→ k8s</i><br><span style="color:var(--faint);font-weight:500;font-size:.72rem">learner's handbook</span></span>
+    </a>
+    <div class="brand-sub">just enough to move on ✎</div>
+    <nav aria-label="Contents">
+      <ul class="nav">
+        <li><a href="#start"><span class="n">00</span> Start here</a></li>
+        <li><a href="#vs"><span class="n">01</span> Docker vs Kubernetes</a></li>
+        <li><a href="#why"><span class="n">02</span> Why Docker still matters</a></li>
+        <li><a href="#scope"><span class="n">03</span> How much to learn</a></li>
+        <li><a href="#build"><span class="n">04</span> Building an image</a></li>
+        <li><a href="#single"><span class="n">05</span> Single container</a></li>
+        <li><a href="#multistage"><span class="n">06</span> Multi-stage builds</a></li>
+        <li><a href="#compose"><span class="n">07</span> Docker Compose</a></li>
+        <li><a href="#bridge"><span class="n">08</span> Compose → manifests</a></li>
+        <li><a href="#manifests"><span class="n">09</span> Manifests, line by line</a></li>
+        <li><a href="#ec2"><span class="n">10</span> Deploy on one EC2</a></li>
+        <li><a href="#next"><span class="n">11</span> Cheat sheet &amp; next</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">
+      One app, threaded end&#8209;to&#8209;end:<br>
+      build → image → compose → manifests → EC2.<br><br>
+      Read top&nbsp;to&nbsp;bottom, or jump around.
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <span id="top"></span>
+    <div class="wrap">
+
+      <!-- HERO -->
+      <header class="hero">
+        <span class="kicker"><span class="dot"></span> Docker, but only the parts Kubernetes needs</span>
+        <h1><span class="b">Docker</span><span class="arr">→</span><span class="k">Kubernetes</span></h1>
+        <p class="hero-lede">A focused handbook that teaches you <b>exactly the Docker you need</b> to be productive with Kubernetes — no more, no less — then walks one small app all the way from a <b>Dockerfile</b> to <b>live pods on a single EC2 instance</b>.</p>
+        <p class="hero-hand">Docker packs the box. Kubernetes runs the whole warehouse.</p>
+
+        <div class="hero-fig">
+          <svg viewBox="0 0 880 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Docker builds and packs containers; Kubernetes orchestrates many of them across a cluster">
+            <defs>
+              <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0d1420"/><stop offset="1" stop-color="#080c14"/>
+              </linearGradient>
+              <linearGradient id="gd" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#8aa2ff"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="880" height="300" fill="url(#sea)"/>
+            <!-- left label -->
+            <text x="40" y="42" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" letter-spacing="1">BUILD-TIME · DOCKER</text>
+            <text x="40" y="60" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="11">package one app into one image</text>
+            <!-- dockerfile -> image -->
+            <rect x="40" y="90" width="120" height="150" rx="10" fill="#0a1018" stroke="#1e2b3f"/>
+            <text x="100" y="112" text-anchor="middle" fill="#8595ab" font-family="'JetBrains Mono',monospace" font-size="10">Dockerfile</text>
+            <line x1="56" y1="126" x2="144" y2="126" stroke="#1e2b3f"/>
+            <text x="56" y="146" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="9">FROM node</text>
+            <text x="56" y="162" fill="#cdd7e3" font-family="'JetBrains Mono',monospace" font-size="9">COPY . .</text>
+            <text x="56" y="178" fill="#cdd7e3" font-family="'JetBrains Mono',monospace" font-size="9">RUN npm ci</text>
+            <text x="56" y="194" fill="#ffb454" font-family="'JetBrains Mono',monospace" font-size="9">CMD node</text>
+            <text x="100" y="228" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">docker build</text>
+            <!-- arrow -->
+            <path d="M172 165 h34" stroke="#38bdf8" stroke-width="2" marker-end="url(#a1)"/>
+            <marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#38bdf8"/></marker>
+            <!-- image (stacked layers) -->
+            <g>
+              <rect x="216" y="118" width="96" height="18" rx="3" fill="#0e2a3a" stroke="#38bdf8" opacity=".9"/>
+              <rect x="216" y="140" width="96" height="18" rx="3" fill="#0e2a3a" stroke="#38bdf8" opacity=".75"/>
+              <rect x="216" y="162" width="96" height="18" rx="3" fill="#0e2a3a" stroke="#38bdf8" opacity=".6"/>
+              <rect x="216" y="184" width="96" height="18" rx="3" fill="#0e2a3a" stroke="#38bdf8" opacity=".45"/>
+              <text x="264" y="222" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700">image</text>
+              <text x="264" y="236" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">(layers)</text>
+            </g>
+            <!-- divider -->
+            <line x1="360" y1="80" x2="360" y2="250" stroke="#1e2b3f" stroke-dasharray="4 5"/>
+            <!-- right label -->
+            <text x="410" y="42" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" letter-spacing="1">RUN-TIME · KUBERNETES</text>
+            <text x="410" y="60" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="11">run many copies, keep them alive, across nodes</text>
+            <!-- registry -->
+            <path d="M316 165 C 360 165, 366 130, 405 130" stroke="#8aa2ff" stroke-width="2" fill="none" marker-end="url(#a2)"/>
+            <marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#8aa2ff"/></marker>
+            <rect x="405" y="112" width="74" height="34" rx="7" fill="#0a1018" stroke="#1e2b3f"/>
+            <text x="442" y="133" text-anchor="middle" fill="#8595ab" font-family="'JetBrains Mono',monospace" font-size="9">registry</text>
+            <!-- cluster box -->
+            <rect x="505" y="82" width="345" height="168" rx="12" fill="rgba(138,162,255,.04)" stroke="#233350"/>
+            <text x="520" y="100" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700">CLUSTER</text>
+            <!-- pods -->
+            <g>
+              <!-- node 1 -->
+              <rect x="520" y="112" width="150" height="124" rx="8" fill="#0d1420" stroke="#1e2b3f"/>
+              <text x="530" y="128" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">node-1</text>
+              <g>
+                <rect x="532" y="138" width="58" height="40" rx="6" fill="#101a2e" stroke="#8aa2ff"/>
+                <rect x="540" y="150" width="18" height="18" rx="2" fill="#38bdf8"/><text x="549" y="163" text-anchor="middle" fill="#080c14" font-family="monospace" font-size="8" font-weight="700">A</text>
+                <rect x="598" y="138" width="58" height="40" rx="6" fill="#101a2e" stroke="#8aa2ff"/>
+                <rect x="606" y="150" width="18" height="18" rx="2" fill="#38bdf8"/><text x="615" y="163" text-anchor="middle" fill="#080c14" font-family="monospace" font-size="8" font-weight="700">A</text>
+                <rect x="532" y="184" width="58" height="40" rx="6" fill="#101a2e" stroke="#8aa2ff"/>
+                <rect x="540" y="196" width="18" height="18" rx="2" fill="#38bdf8"/><text x="549" y="209" text-anchor="middle" fill="#080c14" font-family="monospace" font-size="8" font-weight="700">A</text>
+              </g>
+            </g>
+            <g>
+              <!-- node 2 -->
+              <rect x="686" y="112" width="150" height="124" rx="8" fill="#0d1420" stroke="#1e2b3f"/>
+              <text x="696" y="128" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">node-2</text>
+              <rect x="698" y="138" width="58" height="40" rx="6" fill="#101a2e" stroke="#8aa2ff"/>
+              <rect x="706" y="150" width="18" height="18" rx="2" fill="#38bdf8"/><text x="715" y="163" text-anchor="middle" fill="#080c14" font-family="monospace" font-size="8" font-weight="700">A</text>
+              <rect x="764" y="138" width="58" height="40" rx="6" fill="#101a2e" stroke="#8aa2ff"/>
+              <rect x="772" y="150" width="18" height="18" rx="2" fill="#38bdf8"/><text x="781" y="163" text-anchor="middle" fill="#080c14" font-family="monospace" font-size="8" font-weight="700">A</text>
+              <rect x="731" y="184" width="58" height="40" rx="6" fill="#0d1420" stroke="#233350" stroke-dasharray="3 3"/>
+              <text x="760" y="208" text-anchor="middle" fill="#566579" font-family="monospace" font-size="7">self-heal</text>
+            </g>
+            <!-- pull arrow -->
+            <path d="M479 129 C 495 129, 495 150, 512 150" stroke="#233350" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+            <text x="600" y="252" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">same image · pulled &amp; run as pods · scaled &amp; healed automatically</text>
+          </svg>
+        </div>
+      </header>
+
+      <!-- PART 0 -->
+      <section class="part reveal" id="start">
+        <div class="part-head"><span class="part-num">00</span><h2>Start here<small>read this box and the whole handbook clicks into place</small></h2></div>
+
+        <p>If you're moving from infrastructure and networking into Kubernetes, the honest truth is: <b>you don't need to become a Docker expert first.</b> You need a specific, surprisingly small slice of Docker, and then you spend most of your energy on Kubernetes itself. This handbook is built to give you that slice and nothing extra.</p>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The one idea everything hangs on</span>
+          <p><b>Docker is a packaging tool. Kubernetes is a running tool.</b></p>
+          <p>Docker's job finishes the moment you have an <b>image</b> — a sealed, portable box containing your app and everything it needs. Kubernetes' job <em>starts</em> there: it takes that box and runs many copies of it, restarts them when they die, spreads them across machines, and wires up networking. They are not rivals. They are two links in one chain.</p>
+          <p class="hand">You use Docker to build the box. You use Kubernetes to run an army of those boxes.</p>
+        </div>
+
+        <p>Here's the exact path this handbook follows. It's one small app — a tiny Node.js API — carried the whole way, so nothing ever feels disconnected:</p>
+
+        <div class="fig">
+          <svg viewBox="0 0 860 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Learning path from source code to Kubernetes on EC2">
+            <defs><marker id="pa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#38bdf8"/></marker></defs>
+            <g font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">
+              <rect x="8" y="40" width="118" height="44" rx="9" fill="#0a1018" stroke="#1e2b3f"/><text x="67" y="60" text-anchor="middle" fill="#cdd7e3">source</text><text x="67" y="74" text-anchor="middle" fill="#566579" font-size="8">app.js</text>
+              <path d="M128 62 h26" stroke="#38bdf8" stroke-width="2" marker-end="url(#pa)"/>
+              <rect x="156" y="40" width="118" height="44" rx="9" fill="#0a1018" stroke="#38bdf8"/><text x="215" y="60" text-anchor="middle" fill="#38bdf8">Dockerfile</text><text x="215" y="74" text-anchor="middle" fill="#566579" font-size="8">recipe</text>
+              <path d="M276 62 h26" stroke="#38bdf8" stroke-width="2" marker-end="url(#pa)"/>
+              <rect x="304" y="40" width="118" height="44" rx="9" fill="#0e2a3a" stroke="#38bdf8"/><text x="363" y="60" text-anchor="middle" fill="#38bdf8">image</text><text x="363" y="74" text-anchor="middle" fill="#566579" font-size="8">the box</text>
+              <path d="M424 62 h26" stroke="#8aa2ff" stroke-width="2" marker-end="url(#pa)"/>
+              <rect x="452" y="40" width="118" height="44" rx="9" fill="#0a1018" stroke="#1e2b3f"/><text x="511" y="60" text-anchor="middle" fill="#cdd7e3">registry</text><text x="511" y="74" text-anchor="middle" fill="#566579" font-size="8">push/pull</text>
+              <path d="M572 62 h26" stroke="#8aa2ff" stroke-width="2" marker-end="url(#pa)"/>
+              <rect x="600" y="40" width="128" height="44" rx="9" fill="#101a2e" stroke="#8aa2ff"/><text x="664" y="60" text-anchor="middle" fill="#8aa2ff">manifests</text><text x="664" y="74" text-anchor="middle" fill="#566579" font-size="8">YAML</text>
+              <path d="M730 62 h26" stroke="#8aa2ff" stroke-width="2" marker-end="url(#pa)"/>
+              <rect x="758" y="40" width="94" height="44" rx="9" fill="#101a2e" stroke="#2dd4bf"/><text x="805" y="60" text-anchor="middle" fill="#2dd4bf">EC2</text><text x="805" y="74" text-anchor="middle" fill="#566579" font-size="8">live</text>
+            </g>
+            <text x="215" y="26" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">← Docker's territory</text>
+            <text x="640" y="26" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">Kubernetes' territory →</text>
+          </svg>
+        </div>
+
+        <p>By the end you'll be able to answer, with a real example in hand, every question you came in with: how a Docker image is built, what multi-stage builds are and whether Kubernetes uses them, how Compose differs from Kubernetes, what a manifest means line by line, and how to actually get it running on a single AWS EC2 box.</p>
+      </section>
+
+      <!-- PART 1 -->
+      <section class="part reveal" id="vs">
+        <div class="part-head"><span class="part-num">01</span><h2>Docker vs Kubernetes<small>the difference, in plain terms first</small></h2></div>
+
+        <div class="callout c-note">
+          <span class="tag">✎ Analogy first</span>
+          <p class="hand">Docker is the machine that packs your goods into a standard shipping container and seals it. Kubernetes is the port: cranes, schedules, spare containers ready to swap in, re-routing when a crane breaks. One <em>makes</em> the container; the other <em>operates a whole yard</em> of them.</p>
+        </div>
+
+        <p>People treat "Docker vs Kubernetes" like a versus match, but they solve different problems. Docker answers <b>"how do I package this app so it runs the same everywhere?"</b> Kubernetes answers <b>"how do I run hundreds of those packages reliably, at scale, without babysitting them?"</b></p>
+
+        <p>You can absolutely use Docker without Kubernetes (a single container on your laptop). And Kubernetes runs the containers that Docker-style tooling produced. The overlap is thin: Docker has a tiny built-in orchestrator called <span class="pill p-d">Swarm</span>, and that's the only place the two genuinely compete — and Swarm lost. For real orchestration, the industry standardized on Kubernetes.</p>
+
+        <h3>Side-by-side responsibilities</h3>
+        <table class="tbl">
+          <thead><tr><th>Concern</th><th><span class="cd">Docker</span> handles</th><th><span class="ck">Kubernetes</span> handles</th></tr></thead>
+          <tbody>
+            <tr><td><b>Packaging an app</b></td><td>✓ builds the image (app + deps + OS libs)</td><td>— consumes the image</td></tr>
+            <tr><td><b>Running one container</b></td><td>✓ <code>docker run</code> on one host</td><td>✓ but as a managed <span class="pill p-k">Pod</span></td></tr>
+            <tr><td><b>Running many copies</b></td><td>△ manual / Swarm only</td><td>✓ core feature (<code>replicas</code>)</td></tr>
+            <tr><td><b>Restart on crash</b></td><td>△ restart policy, single host</td><td>✓ self-healing across the cluster</td></tr>
+            <tr><td><b>Spread across machines</b></td><td>✗</td><td>✓ the scheduler places pods on nodes</td></tr>
+            <tr><td><b>Rolling updates / rollback</b></td><td>△ Swarm only</td><td>✓ built into <span class="pill p-k">Deployment</span></td></tr>
+            <tr><td><b>Service discovery / load balance</b></td><td>△ basic DNS on one host</td><td>✓ <span class="pill p-k">Service</span> + cluster DNS</td></tr>
+            <tr><td><b>Autoscaling</b></td><td>✗</td><td>✓ <span class="pill p-k">HPA</span> on CPU/metrics</td></tr>
+            <tr><td><b>Config &amp; secrets</b></td><td>△ env flags, files</td><td>✓ <span class="pill p-k">ConfigMap</span> / <span class="pill p-k">Secret</span></td></tr>
+            <tr><td><b>Scope</b></td><td>one machine</td><td>a fleet of machines as one system</td></tr>
+          </tbody>
+        </table>
+
+        <p>Notice the pattern: nearly every Docker <em>strength</em> is about a single machine, and nearly every Kubernetes strength is about coordinating <em>many</em> machines and <em>many</em> copies. That's the whole distinction in a sentence.</p>
+
+        <div class="callout c-bridge">
+          <span class="tag">→ How this shows up later</span>
+          <p>When you write a Kubernetes <b>Deployment</b> in Part 09, the fields you'll spend the most time on — <code>replicas</code>, <code>selector</code>, probes, <code>resources</code> — are precisely the "many copies, keep them healthy, place them well" concerns from the right-hand column. Docker never had to think about those, which is exactly why Kubernetes exists.</p>
+        </div>
+      </section>
+
+      <!-- PART 2 -->
+      <section class="part reveal" id="why">
+        <div class="part-head"><span class="part-num">02</span><h2>Why we still use Docker in a Kubernetes world<small>including the "Kubernetes dropped Docker!" confusion</small></h2></div>
+
+        <p>This is the question that trips up almost everyone entering Kubernetes, partly because of a genuinely confusing headline from a few years back. Let's clear it completely.</p>
+
+        <h3>The "Kubernetes removed Docker" myth</h3>
+        <p>In 2020, Kubernetes announced it was deprecating something called <b>dockershim</b>, and headlines screamed that "Kubernetes is dropping Docker." That was misleading. Here's what actually happened, plainly:</p>
+
+        <ul>
+          <li>Kubernetes doesn't run containers itself — it delegates to a <b>container runtime</b> (the low-level thing that actually starts a container from an image).</li>
+          <li>Docker was never designed to be that low-level runtime for Kubernetes, so Kubernetes shipped a little adapter called <b>dockershim</b> to talk to Docker anyway. That adapter was extra maintenance baggage.</li>
+          <li>Kubernetes removed the <em>adapter</em> and now talks directly to lightweight runtimes like <b>containerd</b> (which, ironically, is the very same runtime that lives <em>inside</em> Docker) or <b>CRI-O</b>.</li>
+        </ul>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The part that actually matters to you</span>
+          <p>What got removed was a <b>runtime adapter</b>, not the thing you care about. Images built with Docker follow the open <b>OCI</b> standard, and they run <b>perfectly</b> on Kubernetes regardless of runtime. Your <code>docker build</code> workflow is completely unaffected.</p>
+          <p class="hand">Kubernetes stopped using Docker as an <em>engine</em>. It never stopped using the <em>boxes Docker builds</em>.</p>
+        </div>
+
+        <h3>So where do you still use Docker, day to day?</h3>
+        <p>Even on a pure Kubernetes team, Docker (or a Docker-compatible tool) shows up constantly:</p>
+
+        <div class="cards">
+          <div class="card learn">
+            <h5>◆ Building images</h5>
+            <ul>
+              <li>You still write a <code>Dockerfile</code>.</li>
+              <li>You still run <code>docker build</code> in CI to produce the image K8s will run.</li>
+              <li>Multi-stage builds (Part 06) are still how you keep images small.</li>
+            </ul>
+          </div>
+          <div class="card learn">
+            <h5>◆ Local development</h5>
+            <ul>
+              <li><code>docker run</code> to smoke-test the image before it ever touches a cluster.</li>
+              <li><b>Compose</b> to spin up your app + database locally without Kubernetes.</li>
+            </ul>
+          </div>
+          <div class="card learn">
+            <h5>◆ Debugging &amp; registries</h5>
+            <ul>
+              <li><code>docker push</code> / <code>pull</code> to registries (Docker Hub, ECR).</li>
+              <li><code>docker inspect</code>, <code>logs</code>, <code>exec</code> to poke at a container in isolation.</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>In other words: <b>Kubernetes is where images go to run; Docker is where images come from.</b> On the job you'll build with Docker in the morning and deploy to Kubernetes in the afternoon, every day. That's why learning Docker first isn't wasted — it's the on-ramp.</p>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ Nuance worth knowing</span>
+          <p>Some teams have swapped the <em>build</em> tool too — using <b>BuildKit</b>, <b>Buildah</b>, <b>Kaniko</b>, or <b>Podman</b> instead of the Docker CLI (Kaniko in particular builds images <em>inside</em> Kubernetes without a Docker daemon). But these all read the same <code>Dockerfile</code> and produce the same OCI images. Learn Docker's model and these are a small step sideways, not a new mountain.</p>
+        </div>
+
+        <h3 style="border-left-color:var(--k8s)">Where Docker actually fits inside a Kubernetes workflow</h3>
+        <p>Let's get concrete about the exact moments Docker shows up once your app lives on Kubernetes. The clean way to hold it in your head: <b>Docker owns everything up to the image; Kubernetes owns everything from the image onward.</b> That single handoff is the whole relationship — and it happens many times a day.</p>
+
+        <div class="fig">
+          <svg viewBox="0 0 860 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A daily workflow: Docker builds and pushes the image, then Kubernetes pulls and runs it">
+            <defs><marker id="wa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#8595ab"/></marker></defs>
+            <!-- docker zone -->
+            <rect x="8" y="34" width="470" height="86" rx="12" fill="rgba(56,189,248,.05)" stroke="#233350"/>
+            <text x="24" y="24" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">◄ DOCKER'S JOB — build-time</text>
+            <!-- k8s zone -->
+            <rect x="500" y="34" width="352" height="86" rx="12" fill="rgba(138,162,255,.05)" stroke="#233350"/>
+            <text x="516" y="24" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">KUBERNETES' JOB — run-time ►</text>
+            <g font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700">
+              <rect x="24" y="58" width="96" height="40" rx="8" fill="#0a1018" stroke="#38bdf8"/><text x="72" y="76" text-anchor="middle" fill="#cdd7e3">code</text><text x="72" y="90" text-anchor="middle" fill="#566579" font-size="8">edit app</text>
+              <path d="M122 78 h20" stroke="#8595ab" stroke-width="1.6" marker-end="url(#wa)"/>
+              <rect x="144" y="58" width="104" height="40" rx="8" fill="#0e2a3a" stroke="#38bdf8"/><text x="196" y="76" text-anchor="middle" fill="#38bdf8">docker build</text><text x="196" y="90" text-anchor="middle" fill="#566579" font-size="8">make image</text>
+              <path d="M250 78 h20" stroke="#8595ab" stroke-width="1.6" marker-end="url(#wa)"/>
+              <rect x="272" y="58" width="96" height="40" rx="8" fill="#0d1420" stroke="#38bdf8"/><text x="320" y="76" text-anchor="middle" fill="#38bdf8">test</text><text x="320" y="90" text-anchor="middle" fill="#566579" font-size="8">docker run</text>
+              <path d="M370 78 h20" stroke="#8595ab" stroke-width="1.6" marker-end="url(#wa)"/>
+              <rect x="392" y="58" width="76" height="40" rx="8" fill="#0e2a3a" stroke="#38bdf8"/><text x="430" y="76" text-anchor="middle" fill="#38bdf8">push</text><text x="430" y="90" text-anchor="middle" fill="#566579" font-size="8">→ registry</text>
+              <!-- handoff -->
+              <path d="M470 78 h30" stroke="#ffb454" stroke-width="2.2" marker-end="url(#wa)"/>
+              <rect x="514" y="58" width="150" height="40" rx="8" fill="#0d1420" stroke="#1e2b3f"/><text x="589" y="76" text-anchor="middle" fill="#8595ab">registry</text><text x="589" y="90" text-anchor="middle" fill="#566579" font-size="8">the meeting point</text>
+              <path d="M666 78 h20" stroke="#8595ab" stroke-width="1.6" marker-end="url(#wa)"/>
+              <rect x="688" y="58" width="150" height="40" rx="8" fill="#101a2e" stroke="#8aa2ff"/><text x="763" y="76" text-anchor="middle" fill="#8aa2ff">K8s pulls &amp; runs</text><text x="763" y="90" text-anchor="middle" fill="#566579" font-size="8">as pods</text>
+            </g>
+            <text x="485" y="138" text-anchor="middle" fill="#ffb454" font-family="'Caveat',cursive" font-size="16">the registry is the one handshake between the two ✋</text>
+          </svg>
+        </div>
+
+        <p>Now the specific scenarios. In every row below, notice that the <em>Kubernetes column is just context</em> — the real action, the thing you actually type, is Docker:</p>
+
+        <table class="tbl">
+          <thead><tr><th>Scenario / use case</th><th>Exactly how Docker fits in</th><th>What you actually run</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Shipping a new version</b> (the CI/CD pipeline)</td>
+              <td>Kubernetes can't build anything — it only runs images. So every deploy begins with Docker turning your code into the image the cluster will later pull.</td>
+              <td><code>docker build</code> → <code>docker push</code></td>
+            </tr>
+            <tr>
+              <td><b>Sanity-checking before a rollout</b></td>
+              <td>Before wasting a cluster deploy, you run the <em>exact</em> image locally to confirm it boots, serves traffic, and reads its env vars. Catches "won't even start" bugs instantly.</td>
+              <td><code>docker run -p … image:tag</code></td>
+            </tr>
+            <tr>
+              <td><b>Debugging a crashing pod</b> (CrashLoopBackOff)</td>
+              <td>When a pod keeps restarting, pull the same image and run it on your laptop with the same env, then shell in and poke around — no cluster noise, full interactive control.</td>
+              <td><code>docker run -it … sh</code> · <code>docker logs</code></td>
+            </tr>
+            <tr>
+              <td><b>Getting the image to the cluster</b></td>
+              <td>The cluster's nodes can't see your machine. Docker tags and uploads the image to a registry (ECR / Hub) that Kubernetes can pull from. This is the literal bridge.</td>
+              <td><code>docker tag</code> · <code>docker push</code></td>
+            </tr>
+            <tr>
+              <td><b>Keeping images small &amp; safe</b></td>
+              <td>Smaller images = faster pod starts and autoscaling in the cluster. You inspect layers and slim them with Docker <em>before</em> anything is deployed.</td>
+              <td><code>docker history</code> · <code>docker image inspect</code></td>
+            </tr>
+            <tr>
+              <td><b>Golden / base images for the team</b></td>
+              <td>Platform teams maintain a hardened base image with Docker; every app image inherits <code>FROM</code> it. K8s just runs whatever comes out.</td>
+              <td><code>docker build</code> the shared base</td>
+            </tr>
+            <tr>
+              <td><b>Everyday local development</b></td>
+              <td>Instead of spinning up a whole cluster to code, you run the app plus its database with Compose on your machine, then deploy to K8s only when it's ready.</td>
+              <td><code>docker compose up</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The pattern under all seven rows</span>
+          <p>Every scenario is Docker doing <b>build-time</b> work — creating, testing, inspecting, or shipping an <em>image</em> — and Kubernetes only entering once that image exists. You will never "use Docker" and "use Kubernetes" at the same instant; you hand off from one to the other at the registry, over and over.</p>
+          <p class="hand">Docker is the workshop. Kubernetes is the stage. Nothing reaches the stage that wasn't first built in the workshop.</p>
+        </div>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ So is Docker "inside" Kubernetes?</span>
+          <p>No — and that's the subtlety worth keeping straight. Docker isn't a component running <em>within</em> your cluster. It sits <b>alongside</b> Kubernetes in your workflow: on your laptop and in your CI runners, producing the images. The cluster's own low-level runtime (containerd/CRI-O) is what actually launches containers from those images. Docker's role is <em>upstream</em> of Kubernetes, not part of it.</p>
+        </div>
+      </section>
+
+      <!-- PART 3 -->
+      <section class="part reveal" id="scope">
+        <div class="part-head"><span class="part-num">03</span><h2>How much Docker do you actually need?<small>the 20% that carries you into Kubernetes</small></h2></div>
+
+        <p>Here's the reassuring part. Docker has a huge surface area — Swarm, macvlan networking, plugins, contexts, image squashing — but for the goal of "get good at Kubernetes," most of it is noise. Below is the honest split: learn the left column well, skim the middle, and skip the right entirely until you have a reason.</p>
+
+        <div class="cards">
+          <div class="card learn">
+            <h5>◆ Learn well (the core)</h5>
+            <ul>
+              <li>What an <b>image</b> vs a <b>container</b> is</li>
+              <li>Reading &amp; writing a <b>Dockerfile</b></li>
+              <li><b>Layers</b> &amp; build <b>caching</b></li>
+              <li><code>build</code>, <code>run</code>, <code>ps</code>, <code>logs</code>, <code>exec</code></li>
+              <li><b>Tag</b> &amp; <b>push</b> to a registry</li>
+              <li><b>Ports</b> (<code>-p</code>), <b>env vars</b> (<code>-e</code>)</li>
+              <li><b>Volumes</b> (persist data)</li>
+              <li><b>Multi-stage</b> builds (small images)</li>
+              <li>Basics of <b>Compose</b></li>
+            </ul>
+          </div>
+          <div class="card later">
+            <h5>◈ Skim (nice, not urgent)</h5>
+            <ul>
+              <li>User-defined <b>networks</b> &amp; container DNS</li>
+              <li><code>docker inspect</code> with Go templates</li>
+              <li>Restart policies &amp; healthchecks</li>
+              <li>Resource limits (<code>--cpus</code>, <code>--memory</code>)</li>
+              <li><b>.dockerignore</b> &amp; BuildKit cache mounts</li>
+              <li>Non-root users &amp; image scanning (Trivy)</li>
+            </ul>
+          </div>
+          <div class="card skip">
+            <h5>◇ Skip for now</h5>
+            <ul>
+              <li><b>Docker Swarm</b> (Kubernetes replaces it)</li>
+              <li><b>macvlan</b> / advanced net drivers</li>
+              <li>Docker <b>plugins</b> &amp; contexts</li>
+              <li>Image <b>squashing</b> / DockerSlim</li>
+              <li>Custom base images from <code>scratch</code></li>
+              <li>Swarm secrets, stacks, routing mesh</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout c-note">
+          <span class="tag">✎ Rule of thumb</span>
+          <p class="hand">If a Docker feature is about <em>running things across many machines</em> — that's Kubernetes' job now, so skip it in Docker. If it's about <em>building or testing a single image</em> — learn it, because that's the part Kubernetes hands back to you.</p>
+        </div>
+
+        <p>Realistically: a focused engineer can get comfortable with the "learn well" column in a <b>weekend or two</b> of hands-on practice, then move straight into Kubernetes. Everything in this handbook lives in that left column, plus the parts of the middle column that make your images production-ready for a cluster.</p>
+      </section>
+
+      <!-- PART 4 -->
+      <section class="part reveal" id="build">
+        <div class="part-head"><span class="part-num">04</span><h2>Building a Docker image<small>the process, and every Dockerfile instruction that matters</small></h2></div>
+
+        <p>Before the how, lock in the two nouns you'll say a thousand times:</p>
+
+        <table class="tbl">
+          <thead><tr><th>Term</th><th>What it is</th><th>Analogy</th></tr></thead>
+          <tbody>
+            <tr><td><b class="cd">Image</b></td><td>A read-only, layered template: your app + runtime + libraries + OS files, frozen together. It doesn't run — it's a blueprint on disk.</td><td>A sealed, labelled shipping box (or a class in code).</td></tr>
+            <tr><td><b class="cd">Container</b></td><td>A running instance of an image, with a thin writable layer on top. You can start many containers from one image.</td><td>The box actually opened and doing work (an object created from the class).</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Images are made of layers</h3>
+        <p>An image isn't one blob — it's a <b>stack of layers</b>, and each line in your Dockerfile that changes the filesystem creates one. Layers are cached and shared: if ten images all start <code>FROM node:20</code>, that base layer is stored once. This is why <b>the order of your Dockerfile lines matters</b> — put the things that rarely change near the top so their layers stay cached, and the things that change often (your source code) near the bottom.</p>
+
+        <div class="fig">
+          <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Image layers stacked from base OS up to your code, plus a writable container layer on top">
+            <g font-family="'JetBrains Mono',monospace" font-size="11">
+              <rect x="150" y="150" width="420" height="34" rx="5" fill="#101a2e" stroke="#8aa2ff" stroke-dasharray="4 4"/>
+              <text x="360" y="171" text-anchor="middle" fill="#8aa2ff">writable container layer  (lives &amp; dies with the container)</text>
+
+              <rect x="150" y="120" width="420" height="26" rx="4" fill="#0e2a3a" stroke="#38bdf8"/><text x="164" y="137" fill="#38bdf8">COPY app.js .</text><text x="556" y="137" text-anchor="end" fill="#566579" font-size="9">changes often ↑</text>
+              <rect x="150" y="92" width="420" height="26" rx="4" fill="#0e2a3a" stroke="#38bdf8" opacity=".85"/><text x="164" y="109" fill="#cdd7e3">RUN npm ci</text>
+              <rect x="150" y="64" width="420" height="26" rx="4" fill="#0e2a3a" stroke="#38bdf8" opacity=".7"/><text x="164" y="81" fill="#cdd7e3">COPY package.json .</text>
+              <rect x="150" y="36" width="420" height="26" rx="4" fill="#0e2a3a" stroke="#38bdf8" opacity=".5"/><text x="164" y="53" fill="#cdd7e3">FROM node:20   (base image)</text><text x="556" y="53" text-anchor="end" fill="#566579" font-size="9">rarely changes ↓</text>
+            </g>
+            <text x="360" y="204" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">each Dockerfile step = one cached, reusable layer · your code sits on top so cache below stays valid</text>
+          </svg>
+        </div>
+
+        <h3>The Dockerfile instructions you'll actually use</h3>
+        <p>A <code>Dockerfile</code> is just a recipe read top-to-bottom. These are the instructions worth memorising — the rest you can look up:</p>
+
+        <table class="tbl">
+          <thead><tr><th>Instruction</th><th>What it does</th><th>Note for later</th></tr></thead>
+          <tbody>
+            <tr><td><code>FROM</code></td><td>Sets the base image every other layer builds on. Always the first real line.</td><td>Smaller base = smaller image = faster pods.</td></tr>
+            <tr><td><code>WORKDIR</code></td><td>Sets the working directory inside the image (and creates it). All later commands run from here.</td><td>Use it instead of <code>cd</code>.</td></tr>
+            <tr><td><code>COPY</code></td><td>Copies files from your project into the image.</td><td>Copy dependency files first, source last (caching).</td></tr>
+            <tr><td><code>ADD</code></td><td>Like COPY but can fetch URLs and auto-extract tarballs.</td><td>Prefer <code>COPY</code>; only use ADD when you need those extras.</td></tr>
+            <tr><td><code>RUN</code></td><td>Executes a command at <b>build</b> time and bakes the result into a layer (e.g. install packages).</td><td>Chain with <code>&amp;&amp;</code> to keep layers lean.</td></tr>
+            <tr><td><code>ENV</code></td><td>Sets an environment variable baked into the image.</td><td>K8s can override these at runtime.</td></tr>
+            <tr><td><code>ARG</code></td><td>A build-time variable you can pass with <code>--build-arg</code>.</td><td>Gone after build; not visible at runtime.</td></tr>
+            <tr><td><code>EXPOSE</code></td><td>Documents which port the app listens on. Purely informational.</td><td>Does <b>not</b> publish the port — that's <code>-p</code> or a K8s Service.</td></tr>
+            <tr><td><code>USER</code></td><td>Switches to a non-root user for later steps and at runtime.</td><td>Security best practice K8s expects.</td></tr>
+            <tr><td><code>CMD</code></td><td>The default command run when a container starts. Overridable.</td><td>One per Dockerfile (last wins).</td></tr>
+            <tr><td><code>ENTRYPOINT</code></td><td>The fixed executable; <code>CMD</code> becomes its default arguments.</td><td>Use for "this image IS this program".</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ CMD vs ENTRYPOINT — the classic confusion</span>
+          <p><code>ENTRYPOINT</code> is the <b>program</b> that always runs; <code>CMD</code> is the <b>default arguments</b> to it (and is easy to override). A common pattern: <code>ENTRYPOINT ["node"]</code> + <code>CMD ["app.js"]</code>. If you only need "run this by default, but let me override the whole thing," plain <code>CMD ["node","app.js"]</code> is simpler. For most app images, just use <code>CMD</code>.</p>
+        </div>
+
+        <h3>The build → tag → push lifecycle</h3>
+        <p>Producing an image and getting it somewhere Kubernetes can reach it is a three-move dance you'll repeat forever:</p>
+
+        <div class="fig">
+          <svg viewBox="0 0 780 130" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Build creates a local image, tag names it for a registry, push uploads it">
+            <defs><marker id="ba" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#38bdf8"/></marker></defs>
+            <g font-family="'JetBrains Mono',monospace">
+              <rect x="10" y="46" width="150" height="46" rx="9" fill="#0a1018" stroke="#1e2b3f"/><text x="85" y="66" text-anchor="middle" fill="#cdd7e3" font-size="11">Dockerfile + code</text><text x="85" y="82" text-anchor="middle" fill="#566579" font-size="9">your project</text>
+              <path d="M162 69 h44" stroke="#38bdf8" stroke-width="2" marker-end="url(#ba)"/><text x="184" y="60" text-anchor="middle" fill="#38bdf8" font-size="9">build</text>
+              <rect x="208" y="46" width="150" height="46" rx="9" fill="#0e2a3a" stroke="#38bdf8"/><text x="283" y="66" text-anchor="middle" fill="#38bdf8" font-size="11">local image</text><text x="283" y="82" text-anchor="middle" fill="#566579" font-size="9">on your machine</text>
+              <path d="M360 69 h44" stroke="#38bdf8" stroke-width="2" marker-end="url(#ba)"/><text x="382" y="60" text-anchor="middle" fill="#38bdf8" font-size="9">tag</text>
+              <rect x="406" y="46" width="170" height="46" rx="9" fill="#0e2a3a" stroke="#38bdf8"/><text x="491" y="64" text-anchor="middle" fill="#38bdf8" font-size="10">registry/app:1.0.0</text><text x="491" y="80" text-anchor="middle" fill="#566579" font-size="9">a named, addressable ref</text>
+              <path d="M578 69 h44" stroke="#8aa2ff" stroke-width="2" marker-end="url(#ba)"/><text x="600" y="60" text-anchor="middle" fill="#8aa2ff" font-size="9">push</text>
+              <rect x="624" y="46" width="146" height="46" rx="9" fill="#101a2e" stroke="#8aa2ff"/><text x="697" y="66" text-anchor="middle" fill="#8aa2ff" font-size="11">registry</text><text x="697" y="82" text-anchor="middle" fill="#566579" font-size="9">Hub / ECR</text>
+            </g>
+            <text x="390" y="118" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">…later, Kubernetes runs "pull" from the registry to place the image on its nodes</text>
+          </svg>
+        </div>
+
+        <div class="callout c-bridge">
+          <span class="tag">→ Why the registry step is non-negotiable for K8s</span>
+          <p>On your laptop, a freshly built image is right there. But a Kubernetes cluster is <em>other machines</em> — they can't see your laptop's local images. So the image must live in a <b>registry</b> the cluster can pull from. That's why "tag + push" is the bridge between Docker and Kubernetes, and why your Deployment's <code>image:</code> field points at a registry path, not a local name.</p>
+        </div>
+      </section>
+
+      <!-- PART 5 -->
+      <section class="part reveal" id="single">
+        <div class="part-head"><span class="part-num">05</span><h2>A single container, end to end<small>the smallest complete example — build it, run it, ship it</small></h2></div>
+
+        <p>Let's make it real. Our app is a tiny Node.js API called <b>meditrack-api</b>. Two files, no framework magic. This same app rides through every remaining part of the handbook.</p>
+
+        <h4>1 · The app</h4>
+        <div class="code" data-lang="javascript">
+          <div class="code-head"><span class="bar"></span><span class="file">app.js</span><span class="lang">javascript</span></div>
+          <pre><code>const express = require('express');
+const app = express();
+
+<span class="cm">// Read config from the environment. Defaults let it run anywhere,</span>
+<span class="cm">// but Compose and Kubernetes will override these later.</span>
+const PORT = process.env.PORT || 3000;
+const GREETING = process.env.GREETING || 'Hello from your laptop';
+const VERSION = process.env.APP_VERSION || 'dev';
+
+app.get('/', (req, res) =&gt; {
+  res.json({ service: 'meditrack-api', message: GREETING, version: VERSION });
+});
+
+<span class="cm">// A tiny health endpoint — Kubernetes probes will hit this in Part 09.</span>
+app.get('/healthz', (req, res) =&gt; res.status(200).send('ok'));
+
+<span class="cm">// Bind to 0.0.0.0, NOT localhost — see the gotcha below.</span>
+app.listen(PORT, '0.0.0.0', () =&gt; console.log(`listening on ${PORT}`));</code></pre>
+        </div>
+
+        <div class="code" data-lang="json">
+          <div class="code-head"><span class="bar"></span><span class="file">package.json</span><span class="lang">json</span></div>
+          <pre><code>{
+  "name": "meditrack-api",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": { "start": "node app.js" },
+  "dependencies": { "express": "^4.19.2" }
+}</code></pre>
+        </div>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ The #1 "works on my machine, not in the container" bug</span>
+          <p>If your app listens on <code>localhost</code> (127.0.0.1) <em>inside</em> a container, nothing outside the container can reach it — not <code>-p</code>, not a Kubernetes Service. Inside a container, always bind to <code>0.0.0.0</code> (all interfaces). This one line saves hours of "the port is mapped but curl hangs" debugging.</p>
+        </div>
+
+        <h4>2 · The Dockerfile (naive first version)</h4>
+        <p>We'll start with the obvious version so the concepts are clear. Part 06 rewrites it properly.</p>
+        <div class="code" data-lang="dockerfile">
+          <div class="code-head"><span class="bar"></span><span class="file">Dockerfile</span><span class="lang">dockerfile</span></div>
+          <pre><code><span class="kw">FROM</span> node:20                 <span class="cm"># base image: Node 20 on a full OS</span>
+<span class="kw">WORKDIR</span> /app                  <span class="cm"># work inside /app from here on</span>
+<span class="kw">COPY</span> package*.json ./         <span class="cm"># copy dep manifest FIRST (cache-friendly)</span>
+<span class="kw">RUN</span> npm install               <span class="cm"># install deps as a cached layer</span>
+<span class="kw">COPY</span> . .                      <span class="cm"># copy the rest of the source</span>
+<span class="kw">EXPOSE</span> 3000                   <span class="cm"># document the port (informational)</span>
+<span class="kw">CMD</span> [<span class="st">"node"</span>, <span class="st">"app.js"</span>]      <span class="cm"># default command when the container starts</span></code></pre>
+        </div>
+
+        <p>See why <code>package*.json</code> is copied <em>before</em> the source? If you only change <code>app.js</code>, Docker reuses the cached <code>npm install</code> layer and the rebuild is instant. Copy everything at once and every code change re-installs all dependencies. Small ordering choice, big speed difference.</p>
+
+        <div class="code" data-lang="text">
+          <div class="code-head"><span class="bar"></span><span class="file">.dockerignore</span><span class="lang">text</span></div>
+          <pre><code><span class="cm"># keep junk OUT of the build context → faster builds, smaller images</span>
+node_modules
+npm-debug.log
+.git
+.env
+Dockerfile
+docker-compose.yml</code></pre>
+        </div>
+
+        <h4>3 · Build it</h4>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div>
+          <pre><code><span class="pr">$</span> docker build -t meditrack-api:1.0.0 .
+<span class="out">  =&gt; [1/5] FROM node:20</span>
+<span class="out">  =&gt; [2/5] WORKDIR /app</span>
+<span class="out">  =&gt; [3/5] COPY package*.json ./</span>
+<span class="out">  =&gt; [4/5] RUN npm install</span>
+<span class="out">  =&gt; [5/5] COPY . .</span>
+<span class="out">  =&gt; naming to docker.io/library/meditrack-api:1.0.0</span></code></pre>
+        </div>
+        <p><code>-t</code> tags (names) the image; the <code>.</code> at the end is the <b>build context</b> — the folder Docker sends to the builder. That's it: you now have an image on your machine.</p>
+
+        <h4>4 · Run it</h4>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div>
+          <pre><code><span class="cm"># -d = detached (background), -p host:container maps the port,</span>
+<span class="cm"># -e sets an env var, --name gives it a friendly handle</span>
+<span class="pr">$</span> docker run -d -p 8080:3000 -e GREETING="Hi from Docker" --name mt meditrack-api:1.0.0
+
+<span class="pr">$</span> docker ps
+<span class="out">CONTAINER ID   IMAGE                 PORTS                    NAMES</span>
+<span class="out">a1b2c3d4e5f6   meditrack-api:1.0.0   0.0.0.0:8080-&gt;3000/tcp   mt</span>
+
+<span class="pr">$</span> curl http://localhost:8080
+<span class="out">{"service":"meditrack-api","message":"Hi from Docker","version":"dev"}</span>
+
+<span class="pr">$</span> docker logs mt          <span class="cm"># see stdout</span>
+<span class="pr">$</span> docker exec -it mt sh   <span class="cm"># open a shell INSIDE the running container</span>
+<span class="pr">$</span> docker stop mt &amp;&amp; docker rm mt   <span class="cm"># stop and remove it</span></code></pre>
+        </div>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ Read <code>-p 8080:3000</code> left-to-right</span>
+          <p>The <b>left</b> number is the port on your host machine; the <b>right</b> is the port inside the container. So <code>8080:3000</code> means "traffic to my laptop's 8080 goes to the container's 3000." Kubernetes splits this same idea across a <b>Service</b> (<code>port</code>) and a <b>container</b> (<code>targetPort</code>) — you'll spot the parallel in Part 09.</p>
+        </div>
+
+        <h4>5 · Tag &amp; push (so a cluster can pull it)</h4>
+        <p>To hand the image to Kubernetes later, it needs to live in a registry. Two common targets — Docker Hub and AWS ECR:</p>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal — Docker Hub</span><span class="lang">bash</span></div>
+          <pre><code><span class="pr">$</span> docker login
+<span class="pr">$</span> docker tag meditrack-api:1.0.0 yourname/meditrack-api:1.0.0
+<span class="pr">$</span> docker push yourname/meditrack-api:1.0.0</code></pre>
+        </div>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal — AWS ECR</span><span class="lang">bash</span></div>
+          <pre><code><span class="cm"># create the repo once</span>
+<span class="pr">$</span> aws ecr create-repository --repository-name meditrack-api
+
+<span class="cm"># log Docker into ECR (token is valid ~12h)</span>
+<span class="pr">$</span> aws ecr get-login-password --region eu-central-1 \
+    | docker login --username AWS --password-stdin \
+      440534873012.dkr.ecr.eu-central-1.amazonaws.com
+
+<span class="pr">$</span> docker tag meditrack-api:1.0.0 \
+    440534873012.dkr.ecr.eu-central-1.amazonaws.com/meditrack-api:1.0.0
+<span class="pr">$</span> docker push \
+    440534873012.dkr.ecr.eu-central-1.amazonaws.com/meditrack-api:1.0.0</code></pre>
+        </div>
+        <p>That full registry path — <code>&lt;account&gt;.dkr.ecr.&lt;region&gt;.amazonaws.com/meditrack-api:1.0.0</code> — is exactly what goes in the <code>image:</code> field of your Kubernetes Deployment. The circle closes.</p>
+      </section>
+
+      <!-- PART 6 -->
+      <section class="part reveal" id="multistage">
+        <div class="part-head"><span class="part-num">06</span><h2>Multi-stage builds<small>tiny images — and whether Kubernetes uses them</small></h2></div>
+
+        <p>The naive Dockerfile in Part 05 works, but it's <b>fat</b>. It ships the entire Node build toolchain, dev dependencies, and a full OS — often 1 GB+ for a tiny app. Multi-stage builds fix this, and understanding them is one of the highest-leverage Docker skills for Kubernetes.</p>
+
+        <div class="callout c-note">
+          <span class="tag">✎ Analogy first</span>
+          <p class="hand">Think of a big messy kitchen where you cook the meal (all the pots, flour everywhere, the mixer). When it's done, you don't ship the kitchen — you plate just the meal onto a clean dish and send that. Multi-stage builds cook in a "builder" stage, then copy only the finished result into a tiny clean final image.</p>
+        </div>
+
+        <h3>How it works</h3>
+        <p>A multi-stage Dockerfile has <b>more than one <code>FROM</code></b>. Each <code>FROM</code> starts a fresh stage. You do the heavy work (compiling, installing) in an early stage, then <code>COPY --from=&lt;stage&gt;</code> only the artifacts you actually need into a small final stage. Everything left behind — compilers, caches, dev deps — never ships.</p>
+
+        <div class="code" data-lang="dockerfile">
+          <div class="code-head"><span class="bar"></span><span class="file">Dockerfile (multi-stage)</span><span class="lang">dockerfile</span></div>
+          <pre><code><span class="cm"># ---------- Stage 1: BUILD (the messy kitchen) ----------</span>
+<span class="kw">FROM</span> node:20 <span class="kw">AS</span> build
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> package*.json ./
+<span class="kw">RUN</span> npm ci --omit=dev          <span class="cm"># clean, reproducible, prod-only deps</span>
+<span class="kw">COPY</span> . .
+
+<span class="cm"># ---------- Stage 2: RUNTIME (the clean plate) ----------</span>
+<span class="kw">FROM</span> node:20-slim <span class="kw">AS</span> runtime
+<span class="kw">ENV</span> NODE_ENV=production
+<span class="kw">WORKDIR</span> /app
+<span class="kw">RUN</span> groupadd -r app &amp;&amp; useradd -r -g app app   <span class="cm"># a non-root user</span>
+<span class="kw">COPY</span> --from=build /app/node_modules ./node_modules
+<span class="kw">COPY</span> --from=build /app/app.js ./app.js
+<span class="kw">COPY</span> --from=build /app/package.json ./package.json
+<span class="kw">USER</span> app                        <span class="cm"># run unprivileged</span>
+<span class="kw">EXPOSE</span> 3000
+<span class="kw">CMD</span> [<span class="st">"node"</span>, <span class="st">"app.js"</span>]</code></pre>
+        </div>
+
+        <div class="fig">
+          <svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A large builder stage produces artifacts; only those artifacts are copied into a small final image">
+            <defs><marker id="ma" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto"><path d="M0 0l6 3-6 3z" fill="#ffb454"/></marker></defs>
+            <!-- builder -->
+            <rect x="20" y="30" width="300" height="150" rx="12" fill="#0d1420" stroke="#38bdf8"/>
+            <text x="36" y="52" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">STAGE 1 · build</text>
+            <text x="36" y="68" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">node:20  ·  ~1 GB</text>
+            <g font-family="'JetBrains Mono',monospace" font-size="9" fill="#8595ab">
+              <rect x="36" y="80" width="120" height="20" rx="3" fill="#101a2e" stroke="#233350"/><text x="46" y="94">compiler + toolchain</text>
+              <rect x="36" y="104" width="120" height="20" rx="3" fill="#101a2e" stroke="#233350"/><text x="46" y="118">dev dependencies</text>
+              <rect x="36" y="128" width="120" height="20" rx="3" fill="#101a2e" stroke="#233350"/><text x="46" y="142">npm cache</text>
+              <rect x="170" y="80" width="130" height="44" rx="6" fill="#0e2a3a" stroke="#38bdf8"/><text x="235" y="98" text-anchor="middle" fill="#38bdf8">artifacts</text><text x="235" y="114" text-anchor="middle" fill="#566579" font-size="8">node_modules + app.js</text>
+              <text x="36" y="166" fill="#fb7185" font-size="9">✗ everything here is thrown away</text>
+            </g>
+            <!-- arrow COPY --from -->
+            <path d="M322 102 h58" stroke="#ffb454" stroke-width="2" marker-end="url(#ma)"/>
+            <text x="351" y="94" text-anchor="middle" fill="#ffb454" font-family="'Caveat',cursive" font-size="15">copy only these →</text>
+            <!-- final -->
+            <rect x="382" y="52" width="316" height="106" rx="12" fill="#0d1420" stroke="#2dd4bf"/>
+            <text x="398" y="74" fill="#2dd4bf" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">STAGE 2 · runtime</text>
+            <text x="398" y="90" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">node:20-slim  ·  ~180 MB</text>
+            <rect x="398" y="100" width="150" height="44" rx="6" fill="#0e2a3a" stroke="#2dd4bf"/><text x="473" y="118" text-anchor="middle" fill="#2dd4bf" font-family="'JetBrains Mono',monospace" font-size="9">app + prod deps only</text><text x="473" y="132" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">non-root user</text>
+            <text x="620" y="126" text-anchor="middle" fill="#2dd4bf" font-family="'Caveat',cursive" font-size="17">this is what ships ✓</text>
+          </svg>
+        </div>
+
+        <table class="tbl">
+          <thead><tr><th></th><th>Naive single-stage</th><th>Multi-stage</th></tr></thead>
+          <tbody>
+            <tr><td><b>Contents</b></td><td>full OS + Node + build tools + dev deps + app</td><td>slim OS + Node + prod deps + app</td></tr>
+            <tr><td><b>Typical size</b></td><td>~1 GB</td><td>~150–200 MB (distroless: even less)</td></tr>
+            <tr><td><b>Attack surface</b></td><td>large (compilers, shells, extra packages)</td><td>small (fewer things to exploit)</td></tr>
+            <tr><td><b>Runs as</b></td><td>root (default)</td><td>non-root user</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="border-left-color:var(--k8s)">Do we use multi-stage in Kubernetes? And how?</h3>
+
+        <div class="callout c-bridge">
+          <span class="tag">→ The direct answer</span>
+          <p>Multi-stage is a <b>build-time</b> technique — it happens entirely inside <code>docker build</code>, before Kubernetes is ever involved. <b>Kubernetes never sees your stages.</b> It only pulls and runs the <em>final</em> image. So there's no "multi-stage setting" in a manifest — it's not a Kubernetes feature at all.</p>
+          <p class="hand">Kubernetes doesn't know or care how the box was packed — only what's finally inside it.</p>
+        </div>
+
+        <p><b>But yes, you absolutely use multi-stage builds when your target is Kubernetes — arguably <em>more</em> than anywhere else.</b> Here's the "how," meaning how it pays off in a cluster:</p>
+
+        <ul>
+          <li><b>Faster pod startup &amp; autoscaling.</b> When the HPA adds pods or a node reboots, each new pod must <em>pull</em> the image first. A 180 MB image starts far faster than a 1 GB one — the difference between scaling in seconds vs minutes under load.</li>
+          <li><b>Cheaper, faster everything.</b> Smaller images mean less registry storage, less network transfer on every rollout, and less disk on every node.</li>
+          <li><b>Smaller attack surface.</b> Clusters run untrusted-ish workloads at scale; a slim, non-root image with no shell or compiler is a much harder target. Security teams love it.</li>
+          <li><b>Cleaner rollouts.</b> Rolling updates pull the new image onto every node; slim images make updates quick and low-risk.</li>
+        </ul>
+
+        <p>So the mental model is: you <b>choose</b> multi-stage <em>because</em> the image is going to Kubernetes, even though Kubernetes itself is oblivious to the technique. You build the small image with Docker; the Deployment just references it in <code>image:</code>.</p>
+      </section>
+
+      <!-- PART 7 -->
+      <section class="part reveal" id="compose">
+        <div class="part-head"><span class="part-num">07</span><h2>Docker Compose<small>many containers at once — your local dev stand-in for a cluster</small></h2></div>
+
+        <p>Real apps aren't one container — they're an app <em>plus</em> a database, a cache, maybe a queue. Running each with a long <code>docker run</code> line is painful. <b>Compose</b> lets you declare the whole set in one YAML file and bring it all up with a single command. This is your first taste of "describe the desired state in YAML," which is the exact mindset Kubernetes runs on.</p>
+
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">docker-compose.yml</span><span class="lang">yaml</span></div>
+          <pre><code><span class="kw">services</span>:
+  <span class="kw">api</span>:                              <span class="cm"># our Node app</span>
+    build: .                        <span class="cm"># build from the Dockerfile here</span>
+    image: meditrack-api:1.0.0
+    ports:
+      - <span class="st">"3000:3000"</span>               <span class="cm"># host:container</span>
+    environment:
+      GREETING: <span class="st">"Hello from Compose"</span>
+      APP_VERSION: <span class="st">"1.0.0"</span>
+      DATABASE_URL: <span class="st">"postgres://meditrack:secret@db:5432/meditrack"</span>
+      REDIS_URL: <span class="st">"redis://cache:6379"</span>
+    depends_on: [db, cache]         <span class="cm"># start db &amp; cache first</span>
+    restart: unless-stopped
+
+  <span class="kw">db</span>:                               <span class="cm"># PostgreSQL</span>
+    image: postgres:16
+    environment:
+      POSTGRES_USER: meditrack
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: meditrack
+    volumes:
+      - pgdata:/var/lib/postgresql/data   <span class="cm"># persist DB across restarts</span>
+    restart: unless-stopped
+
+  <span class="kw">cache</span>:                            <span class="cm"># Redis</span>
+    image: redis:7
+    restart: unless-stopped
+
+<span class="kw">volumes</span>:
+  pgdata:                           <span class="cm"># a named volume Docker manages</span></code></pre>
+        </div>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The magic you get for free: DNS by service name</span>
+          <p>Compose puts all three containers on one network and lets them find each other <b>by service name</b>. That's why the app's <code>DATABASE_URL</code> says <code>@db:5432</code> — <code>db</code> is literally the hostname of the Postgres container. No IPs, no config. Kubernetes does the identical thing with <b>Services</b> and cluster DNS, so this habit transfers directly.</p>
+        </div>
+
+        <h4>The handful of Compose commands</h4>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div>
+          <pre><code><span class="pr">$</span> docker compose up -d --build    <span class="cm"># build + start everything in background</span>
+<span class="pr">$</span> docker compose ps               <span class="cm"># what's running</span>
+<span class="pr">$</span> docker compose logs -f api       <span class="cm"># follow one service's logs</span>
+<span class="pr">$</span> docker compose exec api sh       <span class="cm"># shell into the api container</span>
+<span class="pr">$</span> docker compose down              <span class="cm"># stop &amp; remove (add -v to wipe volumes)</span></code></pre>
+        </div>
+
+        <h3>Compose vs Kubernetes — same idea, different scale</h3>
+        <p>Compose and Kubernetes are often confused because both use YAML to describe multi-container apps. The difference is <b>where they run and what they guarantee</b>:</p>
+
+        <table class="tbl">
+          <thead><tr><th></th><th><span class="cd">Docker Compose</span></th><th><span class="ck">Kubernetes</span></th></tr></thead>
+          <tbody>
+            <tr><td><b>Runs on</b></td><td>one machine (usually your laptop)</td><td>a cluster of machines</td></tr>
+            <tr><td><b>Best for</b></td><td>local dev, quick demos, small single-host apps</td><td>production, scale, high availability</td></tr>
+            <tr><td><b>Self-healing</b></td><td>basic restart policy</td><td>full — reschedules pods, replaces nodes</td></tr>
+            <tr><td><b>Scaling</b></td><td>manual (<code>--scale</code>), one host</td><td>declarative + automatic (HPA), many hosts</td></tr>
+            <tr><td><b>Rolling updates</b></td><td>no real strategy</td><td>built in, with rollback</td></tr>
+            <tr><td><b>Config file</b></td><td>one <code>docker-compose.yml</code></td><td>several manifests (Deployment, Service, …)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout c-note">
+          <span class="tag">✎ How teams actually use both</span>
+          <p class="hand">Compose for "run the whole app on my machine while I code." Kubernetes for "run it for real in production." Same app, two front doors. Learning Compose first makes Kubernetes' YAML feel familiar instead of foreign.</p>
+        </div>
+      </section>
+
+      <!-- PART 8 -->
+      <section class="part reveal" id="bridge">
+        <div class="part-head"><span class="part-num">08</span><h2>From Compose to Kubernetes manifests<small>translate what you already understand</small></h2></div>
+
+        <p>You now have a working <code>docker-compose.yml</code>. The best way to learn Kubernetes manifests is to see each Compose concept map onto its Kubernetes equivalent. Nothing here is brand new — it's the same ideas, unbundled into separate objects so a cluster can manage each independently.</p>
+
+        <table class="tbl">
+          <thead><tr><th>In Compose you wrote…</th><th>In Kubernetes it becomes…</th><th>Why it splits apart</th></tr></thead>
+          <tbody>
+            <tr><td>a <code>service:</code> with an <code>image</code></td><td><span class="pill p-k">Deployment</span> (which creates Pods)</td><td>K8s needs to manage <em>many replicas</em>, not one container.</td></tr>
+            <tr><td><code>ports: "3000:3000"</code></td><td><span class="pill p-k">Service</span> (+ <span class="pill p-k">Ingress</span> for public URLs)</td><td>A stable network address is decoupled from the pods behind it.</td></tr>
+            <tr><td><code>environment:</code> (plain values)</td><td><span class="pill p-k">ConfigMap</span></td><td>Config lives outside the image and can change without a rebuild.</td></tr>
+            <tr><td><code>environment:</code> (passwords)</td><td><span class="pill p-k">Secret</span></td><td>Sensitive values get separate, restricted handling.</td></tr>
+            <tr><td><code>volumes:</code></td><td><span class="pill p-k">PersistentVolumeClaim</span></td><td>Storage is requested abstractly; the cluster provisions it.</td></tr>
+            <tr><td><code>depends_on:</code></td><td>(no exact match) — use <b>probes</b> + init containers</td><td>K8s prefers "keep retrying until healthy" over strict ordering.</td></tr>
+            <tr><td><code>restart: unless-stopped</code></td><td>automatic — the Deployment always keeps pods alive</td><td>Self-healing is the default, not an opt-in flag.</td></tr>
+            <tr><td><code>--scale api=3</code></td><td><code>replicas: 3</code> (+ <span class="pill p-k">HPA</span>)</td><td>Desired count is declared; K8s makes reality match.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The mental shift: imperative → declarative</span>
+          <p>With Docker you mostly <b>give commands</b> ("run this container now"). With Kubernetes you <b>declare a desired state</b> ("I want 3 healthy replicas of this image, reachable on port 80") and a control loop constantly works to make the cluster match it. If a pod dies, you didn't ask K8s to restart it — it simply notices reality drifted from your declaration and fixes it.</p>
+        </div>
+
+        <div class="callout c-note">
+          <span class="tag">✎ Shortcut worth knowing (don't lean on it)</span>
+          <p class="hand">There's a tool called <b>kompose</b> that auto-converts a docker-compose.yml into rough Kubernetes manifests. Great for a first draft or to see the mapping — but the output always needs hand-tuning. Learn to read and write the YAML yourself (next part), and treat kompose as a scaffold, not a crutch.</p>
+        </div>
+      </section>
+
+      <!-- PART 9 -->
+      <section class="part reveal" id="manifests">
+        <div class="part-head"><span class="part-num">09</span><h2>Kubernetes manifests, line by line<small>the same app, now described for a cluster — every line explained</small></h2></div>
+
+        <p>Here are the manifests that run our <b>meditrack-api</b> image on Kubernetes. Each one below shows the full copy-ready YAML, then a line-by-line breakdown. Don't memorise — read the explanations once and the shape becomes obvious, because every field maps to something you already met in Docker/Compose.</p>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ Every manifest shares four top-level keys</span>
+          <p><code>apiVersion</code> (which API dialect), <code>kind</code> (what type of object), <code>metadata</code> (its name/labels), and <code>spec</code> (the desired state). Learn those four and every Kubernetes file — no matter how scary — has the same skeleton.</p>
+        </div>
+
+        <h3>1 · Namespace — a labelled drawer for your app</h3>
+        <p>A namespace is just a folder that keeps this app's objects separate from everyone else's in the cluster.</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">namespace.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: v1
+kind: Namespace
+metadata:
+  name: meditrack</code></pre>
+        </div>
+        <div class="anno">
+          <div class="anno-top"><span class="file">namespace.yaml</span><span class="lang">line by line</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means</div></div>
+          <div class="arow"><div class="acode"><b>apiVersion:</b> v1</div><div class="aexp">Namespace is a core, stable object, so it lives in the original <code>v1</code> API group (no prefix).</div></div>
+          <div class="arow"><div class="acode"><b>kind:</b> Namespace</div><div class="aexp">Tells Kubernetes which type of object to create. <span class="hand">This one word decides how the whole file is read.</span></div></div>
+          <div class="arow"><div class="acode"><b>metadata:</b></div><div class="aexp">The block that identifies the object — name, labels, annotations.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>name:</b> meditrack</div><div class="aexp">The namespace's name. Every other manifest sets <code>namespace: meditrack</code> to land in this drawer.</div></div>
+        </div>
+
+        <h3>2 · ConfigMap — non-secret settings, outside the image</h3>
+        <p>This holds the same plain env values you had in Compose, but now they live in the cluster instead of being baked into the image — so you can change config without rebuilding.</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">configmap.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: meditrack-config
+  namespace: meditrack
+data:
+  GREETING: "Hello from Kubernetes"
+  APP_VERSION: "1.0.0"</code></pre>
+        </div>
+        <div class="anno">
+          <div class="anno-top"><span class="file">configmap.yaml</span><span class="lang">line by line</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means</div></div>
+          <div class="arow"><div class="acode"><b>kind:</b> ConfigMap</div><div class="aexp">A key/value store for non-sensitive configuration. Think of it as the <code>environment:</code> block from Compose, lifted out of the app.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>namespace:</b> meditrack</div><div class="aexp">Places this object in our drawer from step 1. Without it, the object lands in <code>default</code>.</div></div>
+          <div class="arow"><div class="acode"><b>data:</b></div><div class="aexp">The actual key/value pairs. Everything here is plain text — <span class="hand">never put passwords in a ConfigMap.</span></div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>GREETING:</b> "..."</div><div class="aexp">A value the Deployment will inject into the container as the <code>GREETING</code> env var — the exact one <code>app.js</code> reads.</div></div>
+        </div>
+
+        <h3>3 · Secret — the same idea, for sensitive values</h3>
+        <p>A Secret is structurally like a ConfigMap but meant for passwords, tokens, and connection strings. Kubernetes handles it with extra care (restricted access, kept out of plain logs).</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">secret.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: v1
+kind: Secret
+metadata:
+  name: meditrack-secret
+  namespace: meditrack
+type: Opaque
+stringData:
+  DATABASE_URL: "postgres://meditrack:secret@db:5432/meditrack"</code></pre>
+        </div>
+        <div class="anno">
+          <div class="anno-top"><span class="file">secret.yaml</span><span class="lang">line by line</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means</div></div>
+          <div class="arow"><div class="acode"><b>kind:</b> Secret</div><div class="aexp">Same shape as a ConfigMap, but flagged as sensitive so Kubernetes treats access more strictly.</div></div>
+          <div class="arow"><div class="acode"><b>type:</b> Opaque</div><div class="aexp">The generic "just some key/value secret" type. (Other types exist for things like registry logins and TLS certs.)</div></div>
+          <div class="arow"><div class="acode"><b>stringData:</b></div><div class="aexp">Lets you write values as plain readable text. Kubernetes base64-encodes them for you on the way in. <span class="hand">Use stringData while learning — it's far friendlier than hand-encoding.</span></div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>DATABASE_URL:</b> "..."</div><div class="aexp">The connection string. The Deployment pulls it in as an env var — but sourced from the Secret, not the ConfigMap.</div></div>
+        </div>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ Secrets are only lightly protected by default</span>
+          <p>Out of the box a Kubernetes Secret is merely base64-encoded (trivially decodable), not truly encrypted. For real environments you'd enable encryption-at-rest, tight RBAC, or an external vault. For learning, the pattern above is exactly right — just don't mistake base64 for security.</p>
+        </div>
+
+        <h3>4 · Deployment — the heart of it all</h3>
+        <p>This is the manifest you'll live in. It says: "run <b>N</b> healthy copies of this image, keep them alive, and here's exactly how each copy should be configured." Every Docker concept you learned reappears here as a field.</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">deployment.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meditrack-api
+  namespace: meditrack
+  labels:
+    app: meditrack-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: meditrack-api
+  template:
+    metadata:
+      labels:
+        app: meditrack-api
+    spec:
+      containers:
+        - name: api
+          image: &lt;your-registry&gt;/meditrack-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: meditrack-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: meditrack-secret
+                  key: DATABASE_URL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15</code></pre>
+        </div>
+
+        <div class="anno">
+          <div class="anno-top"><span class="file">deployment.yaml</span><span class="lang">every line explained</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means &amp; why it's there</div></div>
+
+          <div class="arow"><div class="acode"><b>apiVersion:</b> apps/v1</div><div class="aexp">Deployments live in the <code>apps</code> API group (unlike core objects like Namespace/Service which are plain <code>v1</code>). If you ever get "no matches for kind Deployment", a wrong apiVersion is usually why.</div></div>
+          <div class="arow"><div class="acode"><b>kind:</b> Deployment</div><div class="aexp">The controller that manages a set of identical Pods for you — creating, replacing, updating, and scaling them.</div></div>
+
+          <div class="arow"><div class="acode"><b>metadata:</b>&#10;&nbsp;&nbsp;<b>name:</b> meditrack-api&#10;&nbsp;&nbsp;<b>namespace:</b> meditrack</div><div class="aexp">Names the Deployment and files it in our namespace. This name is what you'll type in <code>kubectl</code> commands.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>labels:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;app: meditrack-api</div><div class="aexp">A label on the Deployment object itself — handy for filtering (<code>kubectl get deploy -l app=meditrack-api</code>). Labels are just key/value tags used everywhere in K8s.</div></div>
+
+          <div class="arow"><div class="acode"><b>spec:</b></div><div class="aexp">The desired state begins here. Everything below describes what "correct" looks like; the cluster continuously works to match it.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>replicas:</b> 3</div><div class="aexp"><b>Run three identical Pods.</b> Kill one and the Deployment immediately starts a replacement to get back to three. <span class="hand">This single number is the "self-healing + scaling" you came to Kubernetes for.</span></div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>selector:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;<b>matchLabels:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app: meditrack-api</div><div class="aexp"><b>How the Deployment knows which Pods are "its own."</b> It looks for Pods carrying the label <code>app: meditrack-api</code>. This must match the template labels just below — that's the contract.</div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>template:</b></div><div class="aexp">The blueprint for each Pod. Everything under here is "stamp out one of these, three times." Change the template → the Deployment rolls out new Pods.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;<b>metadata:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>labels:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;app: meditrack-api</div><div class="aexp"><b>The label stamped on every Pod this creates.</b> It must equal the <code>selector.matchLabels</code> above, or the Deployment won't recognise its own Pods. It's also how the Service (step 5) finds them.</div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;<b>spec:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>containers:</b></div><div class="aexp">The Pod's spec. A Pod can hold more than one container, so this is a list — hence the <code>-</code> on the next line.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <b>name:</b> api</div><div class="aexp">A name for this container inside the Pod. Used in commands like <code>kubectl logs &lt;pod&gt; -c api</code>.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>image:</b> &lt;registry&gt;/meditrack-api:1.0.0</div><div class="aexp"><b>The exact image to run</b> — the one you pushed in Part 05. This is the literal handoff point from Docker to Kubernetes. Pin a real version tag, never <code>:latest</code>, so rollouts are predictable.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>imagePullPolicy:</b> IfNotPresent</div><div class="aexp">Pull the image only if the node doesn't already have it. (<code>Always</code> re-pulls every time — useful with mutable tags; <code>IfNotPresent</code> is fine for pinned versions.)</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>ports:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <b>containerPort:</b> 3000</div><div class="aexp">Declares the port the app listens on <em>inside</em> the container — the same 3000 from <code>app.js</code>. Mostly documentation; the Service is what actually routes to it.</div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>envFrom:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <b>configMapRef:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: meditrack-config</div><div class="aexp"><b>Inject every key from the ConfigMap as an env var.</b> So <code>GREETING</code> and <code>APP_VERSION</code> appear inside the container automatically — that's how config reaches your code without a rebuild.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>env:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- name: DATABASE_URL&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>valueFrom:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>secretKeyRef:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name: meditrack-secret&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key: DATABASE_URL</div><div class="aexp"><b>Pull one specific value out of the Secret</b> and expose it as the <code>DATABASE_URL</code> env var. <span class="hand">Same idea as envFrom, but for a single sensitive value sourced from a Secret instead of a ConfigMap.</span></div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>resources:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>requests:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu: "100m"&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memory: "128Mi"</div><div class="aexp"><b>requests</b> = the minimum the scheduler reserves for this Pod when deciding which node it fits on. <code>100m</code> = 0.1 of a CPU core; <code>128Mi</code> ≈ 128 MB. Think of it as the Pod's guaranteed floor.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>limits:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cpu: "500m"&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memory: "256Mi"</div><div class="aexp"><b>limits</b> = the ceiling. Exceed the memory limit and the container is killed (OOMKilled); exceed CPU and it's throttled. Setting both protects noisy neighbours from starving the node.</div></div>
+
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>readinessProbe:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>httpGet:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path: /healthz&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;port: 3000&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initialDelaySeconds: 5&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;periodSeconds: 10</div><div class="aexp"><b>"Is this Pod ready for traffic yet?"</b> Kubernetes hits <code>/healthz</code> every 10s (after a 5s grace). Until it returns 200, the Service won't send requests to this Pod. This is why <code>app.js</code> had a <code>/healthz</code> endpoint. Prevents traffic hitting a still-booting Pod.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>livenessProbe:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>httpGet:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path: /healthz&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;port: 3000&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initialDelaySeconds: 10&#10;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;periodSeconds: 15</div><div class="aexp"><b>"Is this Pod still alive, or wedged?"</b> If <code>/healthz</code> stops responding, Kubernetes <em>restarts</em> the container. <span class="hand">Readiness controls traffic; liveness controls restarts. Same endpoint, two different jobs.</span></div></div>
+        </div>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The label handshake — the thing beginners miss</span>
+          <p>Three label spots must agree: the Deployment's <code>selector.matchLabels</code>, the Pod template's <code>labels</code>, and (next) the Service's <code>selector</code>. That shared label <code>app: meditrack-api</code> is the invisible wiring that lets the Deployment own its Pods and the Service find them. Get these out of sync and you'll see "0 pods" or a Service that routes to nothing.</p>
+        </div>
+
+        <h3>5 · Service — a stable address for the Pods</h3>
+        <p>Pods come and go (and each gets a new IP). A Service is a fixed front door: one stable name and IP that always load-balances to whichever Pods currently match its label selector.</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">service.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: meditrack-api
+  namespace: meditrack
+spec:
+  type: ClusterIP
+  selector:
+    app: meditrack-api
+  ports:
+    - port: 80
+      targetPort: 3000</code></pre>
+        </div>
+        <div class="anno">
+          <div class="anno-top"><span class="file">service.yaml</span><span class="lang">line by line</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means</div></div>
+          <div class="arow"><div class="acode"><b>kind:</b> Service</div><div class="aexp">A stable networking endpoint that fronts a changing set of Pods and load-balances across them.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>type:</b> ClusterIP</div><div class="aexp">The default type: reachable only <em>inside</em> the cluster. Perfect for internal traffic. (We'll switch this to <code>NodePort</code> in Part 10 to reach it from a browser on EC2.)</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>selector:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;app: meditrack-api</div><div class="aexp"><b>Which Pods to send traffic to.</b> The same label handshake again — it targets every Pod tagged <code>app: meditrack-api</code>, i.e. the ones our Deployment made.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>ports:</b>&#10;&nbsp;&nbsp;- <b>port:</b> 80&#10;&nbsp;&nbsp;&nbsp;&nbsp;<b>targetPort:</b> 3000</div><div class="aexp"><code>port</code> = the port the Service listens on (what other things call). <code>targetPort</code> = the container's port it forwards to. <span class="hand">This is Docker's <code>-p 80:3000</code> split into two named fields.</span></div></div>
+        </div>
+
+        <h3>6 · HorizontalPodAutoscaler — grow and shrink automatically</h3>
+        <p>The capability Docker simply doesn't have. This watches CPU and changes <code>replicas</code> for you between a floor and a ceiling.</p>
+        <div class="code" data-lang="yaml">
+          <div class="code-head"><span class="bar"></span><span class="file">hpa.yaml</span><span class="lang">yaml</span></div>
+          <pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: meditrack-api
+  namespace: meditrack
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: meditrack-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70</code></pre>
+        </div>
+        <div class="anno">
+          <div class="anno-top"><span class="file">hpa.yaml</span><span class="lang">line by line</span></div>
+          <div class="arow head"><div class="acode">the line</div><div class="aexp">what it means</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>scaleTargetRef:</b>&#10;&nbsp;&nbsp;&nbsp;&nbsp;kind: Deployment&#10;&nbsp;&nbsp;&nbsp;&nbsp;name: meditrack-api</div><div class="aexp"><b>Which workload to scale.</b> It points straight at our Deployment by name — the HPA drives that Deployment's replica count up and down.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>minReplicas:</b> 2&#10;&nbsp;&nbsp;<b>maxReplicas:</b> 10</div><div class="aexp">Never fewer than 2 (availability), never more than 10 (cost/ceiling). The HPA moves within this band.</div></div>
+          <div class="arow"><div class="acode">&nbsp;&nbsp;<b>metrics:</b> … cpu&#10;&nbsp;&nbsp;averageUtilization: 70</div><div class="aexp"><b>The trigger.</b> Aim to keep average CPU near 70%. Above it → add Pods; well below → remove them. <span class="hand">Requires the metrics-server add-on to actually read CPU.</span></div></div>
+        </div>
+
+        <h3>Applying and checking your manifests</h3>
+        <p>Order matters a little: create the namespace and the config/secret before the things that reference them.</p>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div>
+          <pre><code><span class="pr">$</span> kubectl apply -f namespace.yaml
+<span class="pr">$</span> kubectl apply -f configmap.yaml
+<span class="pr">$</span> kubectl apply -f secret.yaml
+<span class="pr">$</span> kubectl apply -f deployment.yaml
+<span class="pr">$</span> kubectl apply -f service.yaml
+<span class="pr">$</span> kubectl apply -f hpa.yaml
+
+<span class="cm"># …or apply an entire folder at once:</span>
+<span class="pr">$</span> kubectl apply -f ./manifests/
+
+<span class="cm"># watch the pods come up (all in our namespace)</span>
+<span class="pr">$</span> kubectl -n meditrack get pods -w
+<span class="out">NAME                              READY   STATUS    RESTARTS   AGE</span>
+<span class="out">meditrack-api-7d9c8b6f5-2xk4p     1/1     Running   0          20s</span>
+<span class="out">meditrack-api-7d9c8b6f5-8jf2n     1/1     Running   0          20s</span>
+<span class="out">meditrack-api-7d9c8b6f5-q7m3d     1/1     Running   0          20s</span>
+
+<span class="pr">$</span> kubectl -n meditrack get deploy,svc,hpa   <span class="cm"># the whole picture</span>
+<span class="pr">$</span> kubectl -n meditrack describe pod &lt;name&gt;   <span class="cm"># events + why something's stuck</span>
+<span class="pr">$</span> kubectl -n meditrack logs -l app=meditrack-api   <span class="cm"># logs from all matching pods</span></code></pre>
+        </div>
+
+        <div class="callout c-bridge">
+          <span class="tag">→ Notice how little of this is new</span>
+          <p>Every field you just read traces back to something in Docker or Compose: the <code>image</code> you built and pushed, the <code>ports</code> you mapped with <code>-p</code>, the <code>env</code> you set with <code>-e</code>, the config you put in <code>environment:</code>. Kubernetes didn't replace that knowledge — it wrapped it in a declarative, self-healing, multi-machine layer. That's the entire payoff of learning Docker first.</p>
+        </div>
+      </section>
+
+      <!-- PART 10 -->
+      <section class="part reveal" id="ec2">
+        <div class="part-head"><span class="part-num">10</span><h2>Deploy on a single EC2 instance<small>from YAML on your laptop to a live URL on AWS</small></h2></div>
+
+        <p>"Once I have the YAML, how do I actually run this on one EC2 box?" There are two honest answers depending on which YAML you mean, and it's worth doing both because they teach different halves of the picture.</p>
+
+        <div class="fig">
+          <svg viewBox="0 0 780 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="One EC2 instance running either docker compose or a single-node k3s cluster, reachable via its public IP through a security group">
+            <rect x="230" y="26" width="520" height="160" rx="14" fill="#0d1420" stroke="#233350"/>
+            <text x="246" y="46" fill="#2dd4bf" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700">EC2 instance · Ubuntu · public IP</text>
+            <!-- laptop -->
+            <rect x="20" y="80" width="120" height="54" rx="9" fill="#0a1018" stroke="#1e2b3f"/>
+            <text x="80" y="104" text-anchor="middle" fill="#cdd7e3" font-family="'JetBrains Mono',monospace" font-size="10">your laptop</text>
+            <text x="80" y="120" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">yaml + kubectl</text>
+            <!-- security group gate -->
+            <rect x="168" y="72" width="44" height="70" rx="8" fill="#101a2e" stroke="#ffb454"/>
+            <text x="190" y="100" text-anchor="middle" fill="#ffb454" font-family="'JetBrains Mono',monospace" font-size="8">SG</text>
+            <text x="190" y="114" text-anchor="middle" fill="#ffb454" font-family="'JetBrains Mono',monospace" font-size="8">:22</text>
+            <text x="190" y="127" text-anchor="middle" fill="#ffb454" font-family="'JetBrains Mono',monospace" font-size="8">:30080</text>
+            <line x1="140" y1="107" x2="168" y2="107" stroke="#8595ab" stroke-width="1.5"/>
+            <line x1="212" y1="107" x2="230" y2="107" stroke="#8595ab" stroke-width="1.5"/>
+            <!-- path A -->
+            <rect x="250" y="60" width="220" height="52" rx="9" fill="#0e2a3a" stroke="#38bdf8"/>
+            <text x="360" y="80" text-anchor="middle" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700">Path A · docker compose</text>
+            <text x="360" y="96" text-anchor="middle" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="8">api + db + cache containers</text>
+            <!-- path B -->
+            <rect x="250" y="120" width="480" height="54" rx="9" fill="#101a2e" stroke="#8aa2ff"/>
+            <text x="360" y="140" text-anchor="middle" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700">Path B · k3s (1-node cluster)</text>
+            <g>
+              <rect x="470" y="130" width="36" height="34" rx="4" fill="#0e2a3a" stroke="#8aa2ff"/><text x="488" y="151" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9">pod</text>
+              <rect x="512" y="130" width="36" height="34" rx="4" fill="#0e2a3a" stroke="#8aa2ff"/><text x="530" y="151" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9">pod</text>
+              <rect x="554" y="130" width="36" height="34" rx="4" fill="#0e2a3a" stroke="#8aa2ff"/><text x="572" y="151" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="9">pod</text>
+            </g>
+            <text x="490" y="80" fill="#38bdf8" font-family="'JetBrains Mono',monospace" font-size="9">Path A =</text>
+            <text x="490" y="94" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">simplest</text>
+            <text x="628" y="150" fill="#8aa2ff" font-family="'JetBrains Mono',monospace" font-size="9">runs your</text>
+            <text x="628" y="163" fill="#566579" font-family="'JetBrains Mono',monospace" font-size="9">manifests</text>
+          </svg>
+        </div>
+
+        <h3 style="border-left-color:var(--docker)">Path A — Compose on EC2 (the "run it as Docker" answer)</h3>
+        <p>If by "the YAML" you mean your <code>docker-compose.yml</code>, this is the fastest way to get the whole app (api + db + cache) live on one box.</p>
+        <ol class="steps">
+          <li><h4>Launch the instance</h4><p>An Ubuntu EC2 (t3.small or bigger). In its <b>security group</b>, allow inbound <code>22</code> (SSH, your IP only) and <code>3000</code> (the app). This SG step is the single most common reason "it works on the box but not in my browser."</p></li>
+          <li><h4>SSH in</h4>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div><pre><code><span class="pr">$</span> ssh -i key.pem ubuntu@&lt;EC2_PUBLIC_IP&gt;</code></pre></div>
+          </li>
+          <li><h4>Install Docker Engine + the Compose plugin</h4>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div><pre><code><span class="pr">$</span> curl -fsSL https://get.docker.com | sudo sh
+<span class="pr">$</span> sudo usermod -aG docker ubuntu &amp;&amp; newgrp docker   <span class="cm"># run docker without sudo</span>
+<span class="pr">$</span> docker --version &amp;&amp; docker compose version</code></pre></div>
+            <p style="margin:8px 0 0"><span class="pill p-a">tip</span> The convenience script above installs Engine, CLI, containerd, and the Compose plugin in one shot — ideal for a learning box.</p>
+          </li>
+          <li><h4>Get your files onto the box &amp; bring it up</h4>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div><pre><code><span class="pr">$</span> git clone &lt;your-repo&gt; meditrack &amp;&amp; cd meditrack
+<span class="pr">$</span> docker compose up -d --build
+<span class="pr">$</span> docker compose ps                 <span class="cm"># all three should be "running"</span>
+<span class="pr">$</span> curl http://localhost:3000        <span class="cm"># works ON the box</span></code></pre></div>
+          </li>
+          <li><h4>Open it from your browser</h4><p>Visit <code>http://&lt;EC2_PUBLIC_IP&gt;:3000</code>. If <code>curl</code> worked on the box but the browser hangs, it's almost always the security group — re-check that port 3000 is open inbound.</p></li>
+        </ol>
+
+        <h3 style="border-left-color:var(--k8s)">Path B — Run the Kubernetes manifests on one EC2 (using k3s)</h3>
+        <p>If by "the YAML" you mean the manifests from Part 09, you need an actual (tiny) Kubernetes cluster. <b>k3s</b> is a full, lightweight Kubernetes that installs as a single node in one command — perfect for a single EC2.</p>
+        <ol class="steps">
+          <li><h4>Prep the instance</h4><p>Ubuntu EC2 (t3.medium recommended — a cluster wants a bit more RAM). Security group: allow <code>22</code> and <code>30080</code> (our NodePort, chosen below).</p></li>
+          <li><h4>Install k3s (bundles Kubernetes + containerd + kubectl)</h4>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div><pre><code><span class="pr">$</span> curl -sfL https://get.k3s.io | sh -
+<span class="pr">$</span> sudo k3s kubectl get nodes         <span class="cm"># should show one Ready node</span>
+
+<span class="cm"># let plain "kubectl" work without sudo:</span>
+<span class="pr">$</span> mkdir -p ~/.kube
+<span class="pr">$</span> sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+<span class="pr">$</span> sudo chown $(id -u):$(id -g) ~/.kube/config
+<span class="pr">$</span> kubectl get nodes</code></pre></div>
+            <p style="margin:8px 0 0"><span class="pill p-a">note</span> k3s uses its own bundled <b>containerd</b> as the runtime — a live reminder that the cluster runs images without Docker itself, exactly as Part 02 described.</p>
+          </li>
+          <li><h4>Make the image reachable</h4><p>The cluster pulls from a registry, so push your image to Docker Hub or ECR (Part 05) and set the Deployment's <code>image:</code> to that path. For a public image nothing more is needed; for a private one, add an image-pull secret.</p>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal — alt: import a local image into k3s</span><span class="lang">bash</span></div><pre><code><span class="cm"># if you built the image on the EC2 box itself and don't want a registry:</span>
+<span class="pr">$</span> docker save meditrack-api:1.0.0 | sudo k3s ctr images import -</code></pre></div>
+          </li>
+          <li><h4>Use a NodePort Service so the browser can reach it</h4><p>Swap the Service <code>type</code> to <code>NodePort</code> and pin a port. NodePort opens that port on the EC2's own IP — the simplest public access on a single node (no cloud load balancer needed).</p>
+            <div class="code" data-lang="yaml"><div class="code-head"><span class="bar"></span><span class="file">service-nodeport.yaml</span><span class="lang">yaml</span></div><pre><code>apiVersion: v1
+kind: Service
+metadata:
+  name: meditrack-api
+  namespace: meditrack
+spec:
+  type: NodePort            <span class="cm"># exposes a port on the node's IP</span>
+  selector:
+    app: meditrack-api      <span class="cm"># same label handshake</span>
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30080       <span class="cm"># reachable at &lt;EC2_IP&gt;:30080</span></code></pre></div>
+          </li>
+          <li><h4>Apply everything &amp; verify</h4>
+            <div class="code" data-lang="bash"><div class="code-head"><span class="bar"></span><span class="file">terminal</span><span class="lang">bash</span></div><pre><code><span class="pr">$</span> kubectl apply -f namespace.yaml -f configmap.yaml -f secret.yaml
+<span class="pr">$</span> kubectl apply -f deployment.yaml -f service-nodeport.yaml
+<span class="pr">$</span> kubectl -n meditrack get pods,svc
+<span class="pr">$</span> curl http://localhost:30080        <span class="cm"># works on the box</span></code></pre></div>
+          </li>
+          <li><h4>Open it from your browser</h4><p>Visit <code>http://&lt;EC2_PUBLIC_IP&gt;:30080</code>. Same golden rule: if the box's own <code>curl</code> succeeds but the browser can't connect, open <code>30080</code> in the security group.</p></li>
+        </ol>
+
+        <div class="callout c-note">
+          <span class="tag">✎ Which path should you pick?</span>
+          <p class="hand">Learning Docker &amp; want the app up fast? Path A. Practising the actual Kubernetes YAML you'll use at work? Path B. Doing both on the same box, back to back, is the single best way to <em>feel</em> the difference between "run a container" and "run a cluster."</p>
+        </div>
+
+        <div class="callout c-gotcha">
+          <span class="tag">▲ One EC2 is for learning, not production</span>
+          <p>A single node means a single point of failure — if the box dies, everything dies, and self-healing can only reschedule onto the <em>same</em> node. That's completely fine for practice. Real workloads use a managed multi-node cluster (on AWS that's <b>EKS</b>), where the manifests you just wrote work unchanged — you'd only swap the NodePort for a proper LoadBalancer or Ingress.</p>
+        </div>
+      </section>
+
+      <!-- PART 11 -->
+      <section class="part reveal" id="next">
+        <div class="part-head"><span class="part-num">11</span><h2>Cheat sheet &amp; what's next<small>the commands worth muscle-memorising, and where to go from here</small></h2></div>
+
+        <h3>Docker commands you'll type daily</h3>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">docker cheat sheet</span><span class="lang">bash</span></div>
+          <pre><code><span class="cm"># build &amp; ship</span>
+docker build -t app:1.0.0 .            <span class="cm"># build image from Dockerfile</span>
+docker tag app:1.0.0 reg/app:1.0.0     <span class="cm"># name it for a registry</span>
+docker push reg/app:1.0.0              <span class="cm"># upload it</span>
+
+<span class="cm"># run &amp; inspect</span>
+docker run -d -p 8080:3000 --name a app:1.0.0
+docker ps                              <span class="cm"># running containers</span>
+docker logs -f a                       <span class="cm"># follow logs</span>
+docker exec -it a sh                   <span class="cm"># shell inside</span>
+docker stop a &amp;&amp; docker rm a           <span class="cm"># stop + remove</span>
+
+<span class="cm"># compose (multi-container)</span>
+docker compose up -d --build
+docker compose ps
+docker compose down
+
+<span class="cm"># housekeeping</span>
+docker images                          <span class="cm"># list images</span>
+docker system prune -f                 <span class="cm"># reclaim disk from dead stuff</span></code></pre>
+        </div>
+
+        <h3>kubectl commands that mirror them</h3>
+        <div class="code" data-lang="bash">
+          <div class="code-head"><span class="bar"></span><span class="file">kubectl cheat sheet</span><span class="lang">bash</span></div>
+          <pre><code>kubectl apply -f ./manifests/          <span class="cm"># create/update from YAML</span>
+kubectl -n meditrack get pods,svc,deploy    <span class="cm"># what's running</span>
+kubectl -n meditrack logs -l app=meditrack-api   <span class="cm"># logs (docker logs)</span>
+kubectl -n meditrack exec -it &lt;pod&gt; -- sh   <span class="cm"># shell in (docker exec)</span>
+kubectl -n meditrack describe pod &lt;pod&gt;     <span class="cm"># events / why it's stuck</span>
+kubectl -n meditrack rollout status deploy/meditrack-api
+kubectl -n meditrack rollout undo deploy/meditrack-api   <span class="cm"># roll back</span>
+kubectl -n meditrack scale deploy/meditrack-api --replicas=5
+kubectl delete -f ./manifests/         <span class="cm"># tear it all down</span></code></pre>
+        </div>
+
+        <h3>You're ready to go deeper on Kubernetes when…</h3>
+        <div class="cards">
+          <div class="card learn">
+            <h5>✓ Docker is second nature</h5>
+            <ul>
+              <li>You can write a multi-stage Dockerfile without looking it up.</li>
+              <li>You instinctively build → tag → push.</li>
+              <li>You debug a container with <code>logs</code> / <code>exec</code>.</li>
+              <li>Compose feels obvious.</li>
+            </ul>
+          </div>
+          <div class="card later">
+            <h5>→ Next Kubernetes topics</h5>
+            <ul>
+              <li>Ingress &amp; TLS (real URLs)</li>
+              <li>PersistentVolumes for stateful apps</li>
+              <li>Namespaces, RBAC &amp; resource quotas</li>
+              <li>Helm (templating your manifests)</li>
+              <li>Managed clusters: <b>EKS</b> on AWS</li>
+            </ul>
+          </div>
+          <div class="card skip">
+            <h5>◇ Still safe to ignore</h5>
+            <ul>
+              <li>Writing your own operators/CRDs</li>
+              <li>Service mesh internals</li>
+              <li>Cluster-from-scratch (kubeadm) setup</li>
+              <li>Custom schedulers</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout c-insight">
+          <span class="tag">◆ The whole handbook in one breath</span>
+          <p>Docker <b>packages</b> your app into an image and pushes it to a registry. Multi-stage keeps that image small. Compose runs the set locally. Kubernetes <b>pulls the image and runs it</b> as self-healing, scalable Pods described in a handful of YAML files — which you can practise end-to-end on a single EC2 box today. Docker is the workshop; Kubernetes is the stage; the registry is the door between them.</p>
+          <p class="hand">Master the workshop, and the stage stops being scary. ✎</p>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <p><b>meditrack-api</b> — one small Node app, carried from a Dockerfile to live pods. Every command here is real; the fastest way to learn it is to run it on a throwaway EC2 box and break things on purpose.</p>
+        <p>Handbook built for hands-on, learn-by-doing study · Docker → Kubernetes.</p>
+      </footer>
+
+    </div><!-- /.wrap -->
+  </main>
+</div><!-- /.layout -->
+
+<button class="totop" id="totop" aria-label="Back to top">↑</button>
+
+<script>
+(function(){
+  // ---- mobile sidebar toggle ----
+  var sb = document.getElementById('sidebar');
+  var burger = document.getElementById('burger');
+  if(burger){ burger.addEventListener('click', function(){ sb.classList.toggle('open'); }); }
+  // close sidebar when a link is tapped (mobile)
+  sb.addEventListener('click', function(e){
+    if(e.target.closest('a') && window.innerWidth <= 920){ sb.classList.remove('open'); }
+  });
+
+  // ---- copy buttons on every code block ----
+  document.querySelectorAll('.code').forEach(function(block){
+    var head = block.querySelector('.code-head');
+    var pre = block.querySelector('pre');
+    if(!head || !pre) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy'; btn.type = 'button'; btn.textContent = 'copy';
+    head.appendChild(btn);
+    btn.addEventListener('click', function(){
+      var text = pre.innerText.replace(/^\s*\$\s?/gm, ''); // strip shell prompts
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        btn.textContent = 'copied'; btn.classList.add('done');
+        setTimeout(function(){ btn.textContent='copy'; btn.classList.remove('done'); }, 1400);
+      }).catch(function(){ btn.textContent='select+copy'; });
+    });
+  });
+
+  // ---- scroll reveal ----
+  var reveals = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.04 });
+    reveals.forEach(function(r){ io.observe(r); });
+  } else { reveals.forEach(function(r){ r.classList.add('in'); }); }
+
+  // ---- scrollspy: highlight active nav link ----
+  var links = Array.prototype.slice.call(document.querySelectorAll('.nav a'));
+  var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  function onScroll(){
+    var pos = window.scrollY + 140;
+    var current = sections[0];
+    for(var i=0;i<sections.length;i++){ if(sections[i].offsetTop <= pos) current = sections[i]; }
+    links.forEach(function(a){
+      a.classList.toggle('active', current && a.getAttribute('href') === '#'+current.id);
+    });
+    // back to top visibility
+    tt.classList.toggle('show', window.scrollY > 600);
+  }
+  var tt = document.getElementById('totop');
+  tt.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

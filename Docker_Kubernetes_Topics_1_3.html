@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker & Kubernetes — Topics 01–03</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0d0f1a;
+    --surface: #13162a;
+    --surface2: #1a1e35;
+    --border: #252a45;
+    --text: #e2e8f8;
+    --muted: #7b84ab;
+    --accent1: #3ec9f5;   /* cyan  – Docker blue */
+    --accent2: #5bf5a0;   /* green – K8s green  */
+    --accent3: #f7c948;   /* yellow */
+    --accent4: #7c6af7;   /* purple */
+    --accent5: #f76c6c;   /* red */
+    --accent6: #f78b3c;   /* orange */
+
+    --c-keyword:  #c792ea;
+    --c-string:   #c3e88d;
+    --c-comment:  #697098;
+    --c-number:   #f78c6c;
+    --c-func:     #82aaff;
+    --c-class:    #ffcb6b;
+    --c-operator: #89ddff;
+    --c-builtin:  #56d8ff;
+    --c-decorator:#f07178;
+    --c-param:    #f78b3c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: linear-gradient(135deg, #0d0f1a 0%, #071830 50%, #0d0f1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 48px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(62,201,245,.16) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(91,245,160,.10) 0%, transparent 70%);
+  }
+  .cover-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(62,201,245,.15);
+    border: 1px solid rgba(62,201,245,.4);
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1);
+    letter-spacing: .08em;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(90deg, #fff 0%, #9de8ff 60%, var(--accent1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .cover-sub {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 40px;
+  }
+  .cover-table {
+    width: 100%;
+    max-width: 720px;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .cover-table th {
+    background: rgba(62,201,245,.10);
+    color: var(--accent1);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+    border: 1px solid var(--border);
+  }
+  .cover-table td {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .cover-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+  .cover-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent3);
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .cover-note {
+    margin-top: 32px;
+    padding: 14px 20px;
+    background: rgba(91,245,160,.07);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 720px;
+  }
+
+  /* ── LAYOUT ── */
+  .page { max-width: 960px; margin: 0 auto; padding: 0 32px; }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin: 48px 0;
+  }
+  .toc-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .toc-group { margin-bottom: 18px; }
+  .toc-group-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent1);
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .toc a {
+    display: block;
+    padding: 3px 0 3px 16px;
+    font-size: 13.5px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  .toc a:hover { color: var(--text); border-left-color: var(--accent1); padding-left: 20px; }
+
+  /* ── TOPIC HEADER ── */
+  .topic-header {
+    margin: 56px 0 36px;
+    padding: 32px 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .topic-header::after {
+    content: attr(data-num);
+    position: absolute;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Syne', sans-serif;
+    font-size: 120px;
+    font-weight: 800;
+    opacity: .04;
+    color: white;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .topic-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .topic-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+  .topic-objective {
+    font-size: 12.5px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .t1 .topic-eyebrow { color: var(--accent1); }
+  .t1 { border-top: 3px solid var(--accent1); }
+  .t2 .topic-eyebrow { color: var(--accent2); }
+  .t2 { border-top: 3px solid var(--accent2); }
+  .t3 .topic-eyebrow { color: var(--accent4); }
+  .t3 { border-top: 3px solid var(--accent4); }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 8px;
+    color: var(--muted);
+  }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    font-size: 14px;
+  }
+  .callout-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .callout-icon { font-size: 16px; }
+
+  .layman {
+    background: rgba(62,201,245,.08);
+    border: 1px solid rgba(62,201,245,.25);
+  }
+  .layman .callout-title { color: var(--accent1); }
+
+  .realworld {
+    background: rgba(91,245,160,.07);
+    border: 1px solid rgba(91,245,160,.2);
+  }
+  .realworld .callout-title { color: var(--accent2); }
+
+  .tip {
+    background: rgba(247,201,72,.07);
+    border: 1px solid rgba(247,201,72,.25);
+    border-left: 3px solid var(--accent3);
+  }
+  .tip .callout-title { color: var(--accent3); }
+
+  .warning {
+    background: rgba(247,108,108,.07);
+    border: 1px solid rgba(247,108,108,.25);
+    border-left: 3px solid var(--accent5);
+  }
+  .warning .callout-title { color: var(--accent5); }
+
+  .important {
+    background: rgba(124,106,247,.07);
+    border: 1px solid rgba(124,106,247,.25);
+    border-left: 3px solid var(--accent4);
+  }
+  .important .callout-title { color: var(--accent4); }
+
+  /* ── TABLES ── */
+  .tbl-wrap { overflow-x: auto; margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); }
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  table.data th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  table.data td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    vertical-align: top;
+  }
+  table.data tr:last-child td { border-bottom: none; }
+  table.data tr:nth-child(even) td { background: rgba(255,255,255,.015); }
+  table.data td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--accent3);
+    white-space: nowrap;
+  }
+  table.data td.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent1);
+  }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    margin: 20px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 11.5px;
+  }
+  .code-lang {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+  .lang-docker { background: rgba(62,201,245,.15); color: var(--accent1); }
+  .lang-yaml   { background: rgba(91,245,160,.12); color: var(--accent2); }
+  .lang-bash   { background: rgba(247,201,72,.12); color: var(--accent3); }
+  .lang-output { background: rgba(124,106,247,.10); color: var(--accent4); }
+  .code-fname  { color: var(--muted); font-size: 12px; }
+
+  pre {
+    padding: 20px 22px;
+    background: #0a0c18;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  .kw  { color: var(--c-keyword); font-weight: 700; }
+  .str { color: var(--c-string); }
+  .cm  { color: var(--c-comment); font-style: italic; }
+  .num { color: var(--c-number); }
+  .fn  { color: var(--c-func); }
+  .cls { color: var(--c-class); }
+  .op  { color: var(--c-operator); }
+  .bi  { color: var(--c-builtin); }
+  .pm  { color: var(--c-param); }
+  .var { color: #eeffff; }
+  .hl  { background: rgba(62,201,245,.10); display: block; margin: 0 -22px; padding: 0 22px; border-left: 3px solid var(--accent1); }
+
+  ul.styled, ol.styled {
+    padding-left: 0;
+    list-style: none;
+    margin: 12px 0;
+  }
+  ul.styled li, ol.styled li {
+    padding: 6px 0 6px 28px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,.03);
+  }
+  ul.styled li::before {
+    content: '▸';
+    position: absolute;
+    left: 8px;
+    color: var(--accent1);
+    font-size: 11px;
+    top: 9px;
+  }
+
+  /* ── STEP CARDS ── */
+  .steps { display: flex; flex-direction: column; gap: 2px; margin: 16px 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    align-items: start;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .sn1 { background: rgba(62,201,245,.2);  color: var(--accent1); }
+  .sn2 { background: rgba(91,245,160,.15); color: var(--accent2); }
+  .sn3 { background: rgba(247,201,72,.15); color: var(--accent3); }
+  .sn4 { background: rgba(124,106,247,.15);color: var(--accent4); }
+  .step-body { font-size: 14px; padding-top: 6px; }
+  .step-label { font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .step-desc  { color: var(--muted); font-size: 13px; }
+
+  /* ── DIAGRAM WRAPPER ── */
+  .diagram-wrap {
+    margin: 28px 0;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .diagram-label {
+    padding: 10px 18px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .diagram-label span { color: var(--accent1); }
+  .diagram-wrap svg { display: block; width: 100%; }
+
+  /* ── SUMMARY ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .summary-card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .summary-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .summary-card-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 64px;
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+  footer strong { color: var(--accent3); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--accent1);
+  }
+
+  p { margin-bottom: 12px; font-size: 14.5px; }
+  h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; margin: 24px 0 12px; color: var(--accent1); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════ COVER ══ -->
+<div class="cover">
+  <div style="position:relative;z-index:1;">
+    <div class="cover-badge">🐳 DOCKER &nbsp;·&nbsp; ☸️ KUBERNETES &nbsp;·&nbsp; TOPICS 01–03</div>
+    <h1>Containers &amp;<br>Orchestration</h1>
+    <p class="cover-sub">From zero to running workloads in Docker &amp; Kubernetes — beginner-friendly with real-world AWS/cloud examples.</p>
+
+    <table class="cover-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Topic</th>
+          <th>Key Concepts</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>TOPIC 01</td>
+          <td>Docker Fundamentals</td>
+          <td>Images, containers, Dockerfile, layers, registries, basic CLI commands</td>
+        </tr>
+        <tr>
+          <td>TOPIC 02</td>
+          <td>Docker Networking &amp; Volumes</td>
+          <td>Bridge/host/overlay networks, port mapping, named volumes, bind mounts, Docker Compose</td>
+        </tr>
+        <tr>
+          <td>TOPIC 03</td>
+          <td>Kubernetes Core Concepts</td>
+          <td>Pods, Deployments, Services, ReplicaSets, namespaces, kubectl, cluster architecture</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="cover-note">
+      📌 &nbsp;All examples use realistic workloads — a Node.js API, a PostgreSQL database, and a production-style K8s deployment. No prior container knowledge required.
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ══ TOC ══ -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:0 40px;">
+    <div class="toc-group">
+      <div class="toc-group-label">TOPIC 01 — Docker Fundamentals</div>
+      <a href="#t1s1">1.1 What is a Container?</a>
+      <a href="#t1s2">1.2 Images &amp; Layers</a>
+      <a href="#t1s3">1.3 Writing Your First Dockerfile</a>
+      <a href="#t1s4">1.4 Essential Docker CLI Commands</a>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-label">TOPIC 02 — Networking &amp; Volumes</div>
+      <a href="#t2s1">2.1 Container Networking</a>
+      <a href="#t2s2">2.2 Volumes &amp; Persistent Data</a>
+      <a href="#t2s3">2.3 Docker Compose</a>
+    </div>
+    <div class="toc-group">
+      <div class="toc-group-label">TOPIC 03 — Kubernetes Core</div>
+      <a href="#t3s1">3.1 Cluster Architecture</a>
+      <a href="#t3s2">3.2 Pods &amp; Deployments</a>
+      <a href="#t3s3">3.3 Services &amp; Networking</a>
+      <a href="#t3s4">3.4 kubectl in Practice</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════ TOPIC 01 ══ -->
+<div class="topic-header t1" data-num="01" id="topic01">
+  <div class="topic-eyebrow">TOPIC 01 &nbsp;·&nbsp; DOCKER</div>
+  <h2>Docker Fundamentals</h2>
+  <p class="topic-objective">Objective — Understand what containers are, how Docker images work, write a Dockerfile, and use core CLI commands confidently.</p>
+</div>
+
+
+<!-- 1.1 -->
+<div class="section" id="t1s1">
+  <div class="section-title"><span class="section-num">1.1</span> What is a Container?</div>
+
+  <div class="callout layman">
+    <div class="callout-title"><span class="callout-icon">💡</span> Layman's Explanation</div>
+    Imagine shipping a physical product. Before containers, you'd hand-pack each item and hope the destination has the right shelves and labels. A <strong>shipping container</strong> standardises everything — same box, same crane, any ship. Docker containers do the same for software: your app + its dependencies + its runtime, all in one portable, self-contained unit that runs the same way on your laptop, a CI server, or AWS.
+  </div>
+
+  <p>A <strong>container</strong> is a lightweight, isolated process that runs on a shared OS kernel. Unlike a Virtual Machine (VM), it does not virtualise hardware — it uses Linux kernel features called <em>namespaces</em> (isolation) and <em>cgroups</em> (resource limits) to create the illusion of a private OS.</p>
+
+  <!-- DIAGRAM 1 – VM vs Container -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 01</span> — Virtual Machine vs Container architecture</div>
+    <svg viewBox="0 0 860 340" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:24px 20px;">
+      <defs>
+        <linearGradient id="dgrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#1a1e35"/>
+          <stop offset="100%" style="stop-color:#13162a"/>
+        </linearGradient>
+        <linearGradient id="cgrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0e2a38"/>
+          <stop offset="100%" style="stop-color:#0a1a25"/>
+        </linearGradient>
+      </defs>
+      <!-- Labels -->
+      <text x="210" y="22" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle" letter-spacing="2">VIRTUAL MACHINES</text>
+      <text x="620" y="22" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle" letter-spacing="2">CONTAINERS</text>
+
+      <!-- VM side -->
+      <rect x="20" y="35" width="380" height="280" rx="10" fill="url(#dgrad1)" stroke="#252a45" stroke-width="1"/>
+      <!-- Hardware -->
+      <rect x="35" y="270" width="350" height="36" rx="6" fill="#1a1e35" stroke="#252a45" stroke-width="1"/>
+      <text x="210" y="293" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">Physical / Cloud Hardware</text>
+      <!-- Hypervisor -->
+      <rect x="35" y="225" width="350" height="36" rx="6" fill="#1f2742" stroke="#3ec9f5" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="210" y="248" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">Hypervisor (VMware / KVM)</text>
+      <!-- VM boxes -->
+      <rect x="40"  y="48" width="158" height="170" rx="8" fill="#0d1525" stroke="#252a45" stroke-width="1"/>
+      <rect x="207" y="48" width="158" height="170" rx="8" fill="#0d1525" stroke="#252a45" stroke-width="1"/>
+      <!-- VM 1 internals -->
+      <rect x="52"  y="60"  width="134" height="22" rx="4" fill="#1a2a3a" stroke="#1a3a50" stroke-width="1"/>
+      <text x="119" y="75" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">App A</text>
+      <rect x="52"  y="87"  width="134" height="22" rx="4" fill="#1a2a3a" stroke="#1a3a50" stroke-width="1"/>
+      <text x="119" y="102" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Libs / Deps</text>
+      <rect x="52"  y="114" width="134" height="22" rx="4" fill="#1a2535" stroke="#252a45" stroke-width="1"/>
+      <text x="119" y="129" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Guest OS (Linux)</text>
+      <rect x="52"  y="141" width="134" height="22" rx="4" fill="#1a2535" stroke="#252a45" stroke-width="1"/>
+      <text x="119" y="156" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">OS Kernel</text>
+      <text x="119" y="208" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">~1 GB overhead</text>
+      <!-- VM 2 internals -->
+      <rect x="219" y="60"  width="134" height="22" rx="4" fill="#1a2a3a" stroke="#1a3a50" stroke-width="1"/>
+      <text x="286" y="75" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">App B</text>
+      <rect x="219" y="87"  width="134" height="22" rx="4" fill="#1a2a3a" stroke="#1a3a50" stroke-width="1"/>
+      <text x="286" y="102" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Libs / Deps</text>
+      <rect x="219" y="114" width="134" height="22" rx="4" fill="#1a2535" stroke="#252a45" stroke-width="1"/>
+      <text x="286" y="129" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Guest OS (Linux)</text>
+      <rect x="219" y="141" width="134" height="22" rx="4" fill="#1a2535" stroke="#252a45" stroke-width="1"/>
+      <text x="286" y="156" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">OS Kernel</text>
+      <text x="286" y="208" fill="#f76c6c" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">~1 GB overhead</text>
+
+      <!-- Divider -->
+      <line x1="430" y1="35" x2="430" y2="315" stroke="#252a45" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <!-- Container side -->
+      <rect x="440" y="35" width="400" height="280" rx="10" fill="url(#cgrad1)" stroke="#252a45" stroke-width="1"/>
+      <!-- Hardware -->
+      <rect x="455" y="270" width="370" height="36" rx="6" fill="#0e1a25" stroke="#252a45" stroke-width="1"/>
+      <text x="640" y="293" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">Physical / Cloud Hardware</text>
+      <!-- Host OS -->
+      <rect x="455" y="225" width="370" height="36" rx="6" fill="#0e2535" stroke="#3ec9f5" stroke-width="1"/>
+      <text x="640" y="248" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">Host OS Kernel (shared)</text>
+      <!-- Docker Engine -->
+      <rect x="455" y="185" width="370" height="32" rx="6" fill="#072030" stroke="#5bf5a0" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="640" y="206" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">Docker Engine (containerd)</text>
+      <!-- Container boxes -->
+      <rect x="460"  y="48" width="112" height="130" rx="8" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <rect x="580"  y="48" width="112" height="130" rx="8" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <rect x="700"  y="48" width="112" height="130" rx="8" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <!-- C1 -->
+      <rect x="470" y="58" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="516" y="72" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">App A</text>
+      <rect x="470" y="83" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="516" y="97" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Libs</text>
+      <text x="516" y="158" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">~50 MB</text>
+      <!-- C2 -->
+      <rect x="590" y="58" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="636" y="72" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">App B</text>
+      <rect x="590" y="83" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="636" y="97" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Libs</text>
+      <text x="636" y="158" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">~30 MB</text>
+      <!-- C3 -->
+      <rect x="710" y="58" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="756" y="72" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">App C</text>
+      <rect x="710" y="83" width="92" height="20" rx="4" fill="#0e2a3e" stroke="#1a4a60" stroke-width="1"/>
+      <text x="756" y="97" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Libs</text>
+      <text x="756" y="158" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">~80 MB</text>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Property</th><th>Virtual Machine</th><th>Container</th></tr></thead>
+      <tbody>
+        <tr><td>Boot time</td><td>30 – 60 seconds</td><td class="mono">&lt; 1 second</td></tr>
+        <tr><td>Size</td><td>Gigabytes (full OS)</td><td class="mono">Megabytes (libs only)</td></tr>
+        <tr><td>OS</td><td>Full Guest OS per VM</td><td class="mono">Shared host kernel</td></tr>
+        <tr><td>Isolation</td><td>Full hardware isolation</td><td class="mono">Process-level (namespaces)</td></tr>
+        <tr><td>Portability</td><td>Hypervisor-specific</td><td class="mono">Any Docker host</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 1.2 -->
+<div class="section" id="t1s2">
+  <div class="section-title"><span class="section-num">1.2</span> Images &amp; Layers</div>
+
+  <p>A <strong>Docker image</strong> is a read-only template used to create containers. Every image is built from <em>layers</em> — each instruction in a Dockerfile adds a new layer. Layers are cached and shared across images, making builds fast and storage efficient.</p>
+
+  <!-- DIAGRAM 2 – Image layer stack -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 02</span> — Docker image layer stack (node:18 → your app)</div>
+    <svg viewBox="0 0 760 310" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:24px 40px;">
+      <!-- Layers bottom to top -->
+      <!-- Layer 6 – scratch -->
+      <rect x="100" y="258" width="560" height="36" rx="6" fill="#101828" stroke="#252a45" stroke-width="1"/>
+      <text x="380" y="281" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">scratch / base (empty, ~0 B)</text>
+      <text x="698" y="281" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LAYER 0</text>
+
+      <!-- Layer 5 -->
+      <rect x="100" y="212" width="560" height="38" rx="6" fill="#0e1e2e" stroke="#1a3a50" stroke-width="1"/>
+      <text x="380" y="236" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">debian:bookworm-slim OS base (~80 MB)</text>
+      <text x="698" y="236" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LAYER 1</text>
+
+      <!-- Layer 4 -->
+      <rect x="100" y="166" width="560" height="38" rx="6" fill="#0e1e2e" stroke="#1a3a50" stroke-width="1"/>
+      <text x="380" y="190" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">node:18 runtime + npm (~180 MB)</text>
+      <text x="698" y="190" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LAYER 2</text>
+
+      <!-- Layer 3 – COPY package.json -->
+      <rect x="100" y="120" width="560" height="38" rx="6" fill="#0e2535" stroke="#1a4055" stroke-width="1"/>
+      <text x="380" y="144" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">COPY package*.json + RUN npm install (~40 MB)</text>
+      <text x="698" y="144" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LAYER 3</text>
+
+      <!-- Layer 2 – COPY app -->
+      <rect x="100" y="74" width="560" height="38" rx="6" fill="#0e2535" stroke="#1a4055" stroke-width="1"/>
+      <text x="380" y="98" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">COPY ./src /app/src (~2 MB — your code)</text>
+      <text x="698" y="98" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LAYER 4</text>
+
+      <!-- Layer 1 – writable container layer -->
+      <rect x="100" y="28" width="560" height="38" rx="6" fill="#1a2a10" stroke="#3a5a20" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="380" y="52" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle">✏️  Writable container layer (runtime data)</text>
+      <text x="698" y="52" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9">LIVE</text>
+
+      <!-- Brace arrows -->
+      <text x="55" y="236" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">base</text>
+      <text x="55" y="255" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">image</text>
+      <line x1="75" y1="213" x2="75" y2="296" stroke="#3ec9f5" stroke-width="1"/>
+      <line x1="75" y1="213" x2="100" y2="213" stroke="#3ec9f5" stroke-width="1"/>
+      <line x1="75" y1="296" x2="100" y2="296" stroke="#3ec9f5" stroke-width="1"/>
+
+      <text x="55" y="115" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">your</text>
+      <text x="55" y="127" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">layers</text>
+      <line x1="75" y1="74" x2="75" y2="158" stroke="#5bf5a0" stroke-width="1"/>
+      <line x1="75" y1="74"  x2="100" y2="74"  stroke="#5bf5a0" stroke-width="1"/>
+      <line x1="75" y1="158" x2="100" y2="158" stroke="#5bf5a0" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="callout tip">
+    <div class="callout-title"><span class="callout-icon">⚡</span> Cache Tip</div>
+    Docker rebuilds only layers that changed and all layers above them. Always <code>COPY package.json</code> and run <code>npm install</code> <em>before</em> copying your source code — that way, a code-only change won't re-download all dependencies.
+  </div>
+</div>
+
+
+<!-- 1.3 -->
+<div class="section" id="t1s3">
+  <div class="section-title"><span class="section-num">1.3</span> Writing Your First Dockerfile</div>
+
+  <p>A <strong>Dockerfile</strong> is a plain-text recipe that tells Docker how to build your image. Every line is an instruction. Here's a production-style Dockerfile for a Node.js API:</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Dockerfile</span>
+      <span class="code-lang lang-docker">Dockerfile</span>
+    </div>
+    <pre><span class="cm"># ── Stage 1: use an official Node.js LTS image as the base ──────────</span>
+<span class="kw">FROM</span> <span class="str">node:18-alpine</span>               <span class="cm"># Alpine = tiny (~50 MB vs 900 MB full)</span>
+
+<span class="cm"># ── Set the working directory inside the container ──────────────────</span>
+<span class="kw">WORKDIR</span> <span class="str">/app</span>
+
+<span class="cm"># ── Copy dependency manifests first (layer cache trick) ─────────────</span>
+<span class="kw">COPY</span> <span class="str">package*.json ./</span>
+
+<span class="cm"># ── Install production dependencies only ────────────────────────────</span>
+<span class="kw">RUN</span> <span class="fn">npm</span> ci <span class="op">--</span>only=production
+
+<span class="cm"># ── Copy the rest of the application source code ────────────────────</span>
+<span class="kw">COPY</span> <span class="str">. .</span>
+
+<span class="cm"># ── Document which port the app listens on (informational) ──────────</span>
+<span class="kw">EXPOSE</span> <span class="num">3000</span>
+
+<span class="cm"># ── Default command to run when the container starts ────────────────</span>
+<span class="kw">CMD</span> [<span class="str">"node"</span>, <span class="str">"server.js"</span>]</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Build &amp; run</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># Build the image (tag it myapi:1.0)</span>
+<span class="fn">docker</span> build <span class="op">-t</span> myapi:<span class="num">1.0</span> .
+
+<span class="cm"># Run a container from it, map host port 8080 → container port 3000</span>
+<span class="fn">docker</span> run <span class="op">-d</span> <span class="op">-p</span> <span class="num">8080</span>:<span class="num">3000</span> <span class="op">--name</span> api-server myapi:<span class="num">1.0</span>
+
+<span class="cm"># Check it's running</span>
+<span class="fn">curl</span> http://localhost:<span class="num">8080</span>/health</pre>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Instruction</th><th>Purpose</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>FROM</td><td>Base image to start from</td><td class="mono">FROM node:18-alpine</td></tr>
+        <tr><td>WORKDIR</td><td>Set working directory</td><td class="mono">WORKDIR /app</td></tr>
+        <tr><td>COPY</td><td>Copy files from host into image</td><td class="mono">COPY . .</td></tr>
+        <tr><td>RUN</td><td>Execute a shell command (build time)</td><td class="mono">RUN npm install</td></tr>
+        <tr><td>EXPOSE</td><td>Document port (does not publish)</td><td class="mono">EXPOSE 3000</td></tr>
+        <tr><td>ENV</td><td>Set environment variable</td><td class="mono">ENV NODE_ENV=production</td></tr>
+        <tr><td>CMD</td><td>Default command at container start</td><td class="mono">CMD ["node","app.js"]</td></tr>
+        <tr><td>ENTRYPOINT</td><td>Fixed command (CMD becomes args)</td><td class="mono">ENTRYPOINT ["node"]</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 1.4 -->
+<div class="section" id="t1s4">
+  <div class="section-title"><span class="section-num">1.4</span> Essential Docker CLI Commands</div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>docker build -t name:tag .</code></td><td>Build an image from the Dockerfile in current dir</td></tr>
+        <tr><td><code>docker images</code></td><td>List all local images</td></tr>
+        <tr><td><code>docker pull nginx</code></td><td>Download image from Docker Hub</td></tr>
+        <tr><td><code>docker run -d -p 80:80 nginx</code></td><td>Run container in background, map ports</td></tr>
+        <tr><td><code>docker ps</code></td><td>List running containers</td></tr>
+        <tr><td><code>docker ps -a</code></td><td>List all containers (including stopped)</td></tr>
+        <tr><td><code>docker logs &lt;id&gt;</code></td><td>View container stdout/stderr logs</td></tr>
+        <tr><td><code>docker exec -it &lt;id&gt; sh</code></td><td>Open a shell inside a running container</td></tr>
+        <tr><td><code>docker stop &lt;id&gt;</code></td><td>Gracefully stop a container (SIGTERM)</td></tr>
+        <tr><td><code>docker rm &lt;id&gt;</code></td><td>Remove a stopped container</td></tr>
+        <tr><td><code>docker rmi name:tag</code></td><td>Remove a local image</td></tr>
+        <tr><td><code>docker push name:tag</code></td><td>Push image to a registry (Docker Hub / ECR)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout realworld">
+    <div class="callout-title"><span class="callout-icon">🌍</span> Real-World Usage</div>
+    In a CI/CD pipeline (GitHub Actions, GitLab CI), the typical flow is: <strong>docker build → docker push</strong> to ECR (AWS) or GCR (GCP), then the deployment system pulls and runs the new image. You never SSH into a server to deploy — you push an image.
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════ TOPIC 02 ══ -->
+<div class="topic-header t2" data-num="02" id="topic02">
+  <div class="topic-eyebrow">TOPIC 02 &nbsp;·&nbsp; DOCKER</div>
+  <h2>Networking, Volumes &amp; Compose</h2>
+  <p class="topic-objective">Objective — Connect containers together over networks, persist data with volumes, and manage multi-container apps with Docker Compose.</p>
+</div>
+
+
+<!-- 2.1 -->
+<div class="section" id="t2s1">
+  <div class="section-title"><span class="section-num">2.1</span> Container Networking</div>
+
+  <p>Docker gives every container a virtual network interface. By default, containers on the same <em>bridge network</em> can reach each other by container name. Containers are isolated from the host unless you explicitly map ports with <code>-p</code>.</p>
+
+  <!-- DIAGRAM 3 – Docker networking -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 03</span> — Docker bridge network: API + Database + external traffic</div>
+    <svg viewBox="0 0 820 320" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px;">
+      <!-- Internet -->
+      <rect x="20" y="130" width="100" height="60" rx="8" fill="#1a1a2e" stroke="#252a45" stroke-width="1"/>
+      <text x="70" y="155" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Internet</text>
+      <text x="70" y="170" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">/ Host</text>
+      <!-- Arrow: internet -> api -->
+      <line x1="120" y1="160" x2="215" y2="160" stroke="#f7c948" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <polygon points="215,155 225,160 215,165" fill="#f7c948"/>
+      <text x="168" y="153" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">:8080 → :3000</text>
+
+      <!-- Bridge network box -->
+      <rect x="225" y="40" width="560" height="240" rx="12" fill="#081525" stroke="#1a3a50" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <text x="505" y="62" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" letter-spacing="2">DOCKER BRIDGE NETWORK: app-net (172.20.0.0/16)</text>
+
+      <!-- API Container -->
+      <rect x="255" y="85" width="180" height="160" rx="10" fill="#0d1f30" stroke="#3ec9f5" stroke-width="1.5"/>
+      <rect x="255" y="85" width="180" height="30" rx="10" fill="#0e2a3e"/>
+      <text x="345" y="105" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">api-server</text>
+      <text x="345" y="140" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Image: myapi:1.0</text>
+      <text x="345" y="158" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Port 3000</text>
+      <text x="345" y="176" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">IP: 172.20.0.2</text>
+      <text x="345" y="222" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">NODE_ENV=production</text>
+
+      <!-- DB Container -->
+      <rect x="485" y="85" width="180" height="160" rx="10" fill="#0d1f30" stroke="#5bf5a0" stroke-width="1.5"/>
+      <rect x="485" y="85" width="180" height="30" rx="10" fill="#0e2a1a"/>
+      <text x="575" y="105" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" text-anchor="middle">postgres-db</text>
+      <text x="575" y="140" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Image: postgres:15</text>
+      <text x="575" y="158" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Port 5432</text>
+      <text x="575" y="176" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">IP: 172.20.0.3</text>
+      <text x="575" y="200" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">📦 Volume: pg-data</text>
+      <text x="575" y="222" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">→ /var/lib/postgresql</text>
+
+      <!-- Internal arrow api -> db -->
+      <line x1="435" y1="165" x2="483" y2="165" stroke="#5bf5a0" stroke-width="1.5"/>
+      <polygon points="483,160 493,165 483,170" fill="#5bf5a0"/>
+      <text x="459" y="155" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">postgres-db:5432</text>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Network Type</th><th>Use Case</th><th>Container Discovery</th></tr></thead>
+      <tbody>
+        <tr><td>bridge (default)</td><td>Single-host development</td><td class="mono">By container name</td></tr>
+        <tr><td>host</td><td>High-performance, no NAT</td><td class="mono">Shares host network stack</td></tr>
+        <tr><td>none</td><td>Fully isolated workload</td><td class="mono">No networking</td></tr>
+        <tr><td>overlay</td><td>Multi-host (Docker Swarm / K8s)</td><td class="mono">Across nodes via VXLAN</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 2.2 -->
+<div class="section" id="t2s2">
+  <div class="section-title"><span class="section-num">2.2</span> Volumes &amp; Persistent Data</div>
+
+  <p>Containers are <em>ephemeral</em> — when removed, all data written inside is lost. <strong>Volumes</strong> solve this by mounting external storage into the container's filesystem.</p>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Type</th><th>Syntax</th><th>Best For</th></tr></thead>
+      <tbody>
+        <tr><td>Named volume</td><td class="mono">-v pg-data:/var/lib/postgresql</td><td>Databases — Docker manages location</td></tr>
+        <tr><td>Bind mount</td><td class="mono">-v $(pwd)/src:/app/src</td><td>Dev hot-reload — mirrors host folder</td></tr>
+        <tr><td>tmpfs mount</td><td class="mono">--tmpfs /tmp</td><td>Sensitive data — RAM only, never on disk</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Named volume example</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># Create a named volume</span>
+<span class="fn">docker</span> volume create pg-data
+
+<span class="cm"># Run Postgres with that volume — data survives container removal</span>
+<span class="fn">docker</span> run <span class="op">-d</span> \
+  <span class="op">--name</span> postgres-db \
+  <span class="op">-e</span> <span class="var">POSTGRES_PASSWORD</span>=<span class="str">secret</span> \
+  <span class="op">-v</span> pg-data:/var/lib/postgresql/data \
+  postgres:<span class="num">15</span>
+
+<span class="cm"># List volumes</span>
+<span class="fn">docker</span> volume ls
+
+<span class="cm"># Inspect a volume (see where Docker stores it on the host)</span>
+<span class="fn">docker</span> volume inspect pg-data</pre>
+  </div>
+</div>
+
+
+<!-- 2.3 -->
+<div class="section" id="t2s3">
+  <div class="section-title"><span class="section-num">2.3</span> Docker Compose</div>
+
+  <p>Running multiple <code>docker run</code> commands is error-prone. <strong>Docker Compose</strong> lets you define your entire stack in a single YAML file and bring it up with one command.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">docker-compose.yml</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">version</span><span class="op">:</span> <span class="str">"3.9"</span>
+
+<span class="kw">services</span><span class="op">:</span>
+
+  <span class="cls">api</span><span class="op">:</span>
+    <span class="kw">build</span><span class="op">:</span> <span class="str">.</span>                          <span class="cm"># build from local Dockerfile</span>
+    <span class="kw">ports</span><span class="op">:</span>
+      <span class="op">-</span> <span class="str">"8080:3000"</span>
+    <span class="kw">environment</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">NODE_ENV</span>=<span class="str">production</span>
+      <span class="op">-</span> <span class="var">DB_HOST</span>=<span class="str">postgres-db</span>           <span class="cm"># service name = DNS hostname</span>
+      <span class="op">-</span> <span class="var">DB_PORT</span>=<span class="num">5432</span>
+    <span class="kw">depends_on</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">postgres-db</span>                   <span class="cm"># start DB first</span>
+    <span class="kw">networks</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">app-net</span>
+
+  <span class="cls">postgres-db</span><span class="op">:</span>
+    <span class="kw">image</span><span class="op">:</span> <span class="str">postgres:15</span>
+    <span class="kw">environment</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">POSTGRES_PASSWORD</span>=<span class="str">secret</span>
+      <span class="op">-</span> <span class="var">POSTGRES_DB</span>=<span class="str">appdb</span>
+    <span class="kw">volumes</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">pg-data</span>:/var/lib/postgresql/data
+    <span class="kw">networks</span><span class="op">:</span>
+      <span class="op">-</span> <span class="var">app-net</span>
+
+<span class="kw">volumes</span><span class="op">:</span>
+  <span class="cls">pg-data</span><span class="op">:</span>                             <span class="cm"># named volume definition</span>
+
+<span class="kw">networks</span><span class="op">:</span>
+  <span class="cls">app-net</span><span class="op">:</span>
+    <span class="kw">driver</span><span class="op">:</span> <span class="str">bridge</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Compose commands</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="fn">docker</span> compose up <span class="op">-d</span>            <span class="cm"># start all services in background</span>
+<span class="fn">docker</span> compose logs <span class="op">-f</span> api       <span class="cm"># stream logs from api service</span>
+<span class="fn">docker</span> compose ps                <span class="cm"># list running services</span>
+<span class="fn">docker</span> compose down              <span class="cm"># stop & remove containers (keep volumes)</span>
+<span class="fn">docker</span> compose down <span class="op">-v</span>          <span class="cm"># also delete volumes (clean slate)</span></pre>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════ TOPIC 03 ══ -->
+<div class="topic-header t3" data-num="03" id="topic03">
+  <div class="topic-eyebrow">TOPIC 03 &nbsp;·&nbsp; KUBERNETES</div>
+  <h2>Kubernetes Core Concepts</h2>
+  <p class="topic-objective">Objective — Understand K8s cluster architecture, deploy apps using Pods and Deployments, expose them with Services, and use kubectl effectively.</p>
+</div>
+
+<div class="callout layman">
+  <div class="callout-title"><span class="callout-icon">💡</span> Layman's Explanation</div>
+  Docker Compose is great for one machine. But what if you need your app to run on 50 machines, auto-heal when a container crashes, and roll out updates without downtime? That's what <strong>Kubernetes</strong> (K8s) does — it's a <em>container orchestrator</em>. Think of K8s as an airline operations centre: it knows about all the planes (nodes), decides where to route passengers (containers), and automatically rebooks flights when a plane breaks (restarts failed pods).
+</div>
+
+
+<!-- 3.1 -->
+<div class="section" id="t3s1">
+  <div class="section-title"><span class="section-num">3.1</span> Cluster Architecture</div>
+
+  <p>A Kubernetes <strong>cluster</strong> consists of a <em>control plane</em> (the brain) and one or more <em>worker nodes</em> (where containers actually run).</p>
+
+  <!-- DIAGRAM 4 – K8s cluster architecture -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 04</span> — Kubernetes cluster: Control Plane + Worker Nodes</div>
+    <svg viewBox="0 0 860 420" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Control Plane box -->
+      <rect x="20" y="20" width="820" height="155" rx="12" fill="#0a1520" stroke="#7c6af7" stroke-width="1.5" stroke-dasharray="7,4"/>
+      <text x="430" y="44" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="11" text-anchor="middle" letter-spacing="2">CONTROL PLANE (Master Node)</text>
+
+      <!-- API Server -->
+      <rect x="40"  y="58" width="165" height="96" rx="8" fill="#12102a" stroke="#7c6af7" stroke-width="1.2"/>
+      <text x="122" y="80" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">API Server</text>
+      <text x="122" y="100" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Entry point for all</text>
+      <text x="122" y="114" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">kubectl commands</text>
+      <text x="122" y="130" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">REST API + AuthN/AuthZ</text>
+
+      <!-- etcd -->
+      <rect x="220" y="58" width="165" height="96" rx="8" fill="#12102a" stroke="#7c6af7" stroke-width="1.2"/>
+      <text x="302" y="80" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">etcd</text>
+      <text x="302" y="100" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Distributed key-value</text>
+      <text x="302" y="114" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">store — cluster state</text>
+      <text x="302" y="130" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Source of truth</text>
+
+      <!-- Scheduler -->
+      <rect x="400" y="58" width="165" height="96" rx="8" fill="#12102a" stroke="#7c6af7" stroke-width="1.2"/>
+      <text x="482" y="80" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Scheduler</text>
+      <text x="482" y="100" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Assigns Pods to</text>
+      <text x="482" y="114" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">worker nodes</text>
+      <text x="482" y="130" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Resource-aware</text>
+
+      <!-- Controller Manager -->
+      <rect x="580" y="58" width="240" height="96" rx="8" fill="#12102a" stroke="#7c6af7" stroke-width="1.2"/>
+      <text x="700" y="80" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" text-anchor="middle">Controller Manager</text>
+      <text x="700" y="100" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Runs control loops</text>
+      <text x="700" y="114" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">(ReplicaSet, Deployment…)</text>
+      <text x="700" y="130" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Reconciles desired vs actual state</text>
+
+      <!-- kubectl -->
+      <rect x="20" y="195" width="110" height="48" rx="8" fill="#0e1825" stroke="#f7c948" stroke-width="1"/>
+      <text x="75" y="214" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" font-weight="700">kubectl</text>
+      <text x="75" y="232" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">CLI tool</text>
+      <line x1="130" y1="219" x2="155" y2="130" stroke="#f7c948" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- Worker nodes -->
+      <!-- Node 1 -->
+      <rect x="20" y="265" width="255" height="135" rx="12" fill="#080e1a" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="147" y="285" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" letter-spacing="1">WORKER NODE 1</text>
+      <rect x="35"  y="297" width="100" height="50" rx="6" fill="#0a1a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="85" y="316" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod</text>
+      <text x="85" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">api:1.0  :3000</text>
+      <rect x="145" y="297" width="115" height="50" rx="6" fill="#0a1a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="202" y="316" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod</text>
+      <text x="202" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">api:1.0  :3000</text>
+      <text x="147" y="380" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">kubelet + kube-proxy</text>
+
+      <!-- Node 2 -->
+      <rect x="295" y="265" width="255" height="135" rx="12" fill="#080e1a" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="422" y="285" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" letter-spacing="1">WORKER NODE 2</text>
+      <rect x="310" y="297" width="100" height="50" rx="6" fill="#0a1a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="360" y="316" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod</text>
+      <text x="360" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">api:1.0  :3000</text>
+      <rect x="420" y="297" width="115" height="50" rx="6" fill="#0a1a28" stroke="#1a4a20" stroke-width="1"/>
+      <text x="477" y="316" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod</text>
+      <text x="477" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">postgres:15</text>
+      <text x="422" y="380" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">kubelet + kube-proxy</text>
+
+      <!-- Node 3 -->
+      <rect x="570" y="265" width="270" height="135" rx="12" fill="#080e1a" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="705" y="285" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle" letter-spacing="1">WORKER NODE 3</text>
+      <rect x="585" y="297" width="100" height="50" rx="6" fill="#0a1a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="635" y="316" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod</text>
+      <text x="635" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">api:1.0  :3000</text>
+      <rect x="695" y="297" width="130" height="50" rx="6" fill="#120a20" stroke="#2a1a40" stroke-width="1"/>
+      <text x="760" y="316" fill="#c792ea" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod (pending…)</text>
+      <text x="760" y="330" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">being scheduled</text>
+      <text x="705" y="380" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">kubelet + kube-proxy</text>
+
+      <!-- Arrows from control plane to nodes -->
+      <line x1="120" y1="175" x2="120" y2="263" stroke="#7c6af7" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="120" y1="175" x2="422" y2="263" stroke="#7c6af7" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/>
+      <line x1="120" y1="175" x2="705" y2="263" stroke="#7c6af7" stroke-width="1" stroke-dasharray="4,3" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Component</th><th>Lives On</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td>API Server</td><td>Control Plane</td><td>All kubectl commands go here; central REST gateway</td></tr>
+        <tr><td>etcd</td><td>Control Plane</td><td>Distributed DB storing all cluster state</td></tr>
+        <tr><td>Scheduler</td><td>Control Plane</td><td>Picks which node a new Pod runs on</td></tr>
+        <tr><td>Controller Manager</td><td>Control Plane</td><td>Reconciles desired vs actual state (restarts failed pods)</td></tr>
+        <tr><td>kubelet</td><td>Every worker node</td><td>Agent that starts/stops containers per Pod spec</td></tr>
+        <tr><td>kube-proxy</td><td>Every worker node</td><td>Handles network rules for Service routing</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- 3.2 -->
+<div class="section" id="t3s2">
+  <div class="section-title"><span class="section-num">3.2</span> Pods &amp; Deployments</div>
+
+  <p>A <strong>Pod</strong> is the smallest deployable unit in K8s — it wraps one or more containers that share a network and storage. You rarely create Pods directly; instead you use a <strong>Deployment</strong>, which manages a <strong>ReplicaSet</strong> that keeps your desired number of Pod replicas running.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">deployment.yaml</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">apps/v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Deployment</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">api-deployment</span>
+  <span class="kw">namespace</span><span class="op">:</span> <span class="str">production</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">replicas</span><span class="op">:</span> <span class="num">3</span>                      <span class="cm"># keep 3 Pods running at all times</span>
+  <span class="kw">selector</span><span class="op">:</span>
+    <span class="kw">matchLabels</span><span class="op">:</span>
+      <span class="kw">app</span><span class="op">:</span> <span class="str">api</span>
+  <span class="kw">strategy</span><span class="op">:</span>
+    <span class="kw">type</span><span class="op">:</span> <span class="str">RollingUpdate</span>             <span class="cm"># zero-downtime deploys</span>
+    <span class="kw">rollingUpdate</span><span class="op">:</span>
+      <span class="kw">maxSurge</span><span class="op">:</span> <span class="num">1</span>
+      <span class="kw">maxUnavailable</span><span class="op">:</span> <span class="num">0</span>
+  <span class="kw">template</span><span class="op">:</span>                         <span class="cm"># Pod template</span>
+    <span class="kw">metadata</span><span class="op">:</span>
+      <span class="kw">labels</span><span class="op">:</span>
+        <span class="kw">app</span><span class="op">:</span> <span class="str">api</span>
+    <span class="kw">spec</span><span class="op">:</span>
+      <span class="kw">containers</span><span class="op">:</span>
+        <span class="op">-</span> <span class="kw">name</span><span class="op">:</span> <span class="str">api</span>
+          <span class="kw">image</span><span class="op">:</span> <span class="str">123456789.dkr.ecr.eu-west-1.amazonaws.com/myapi:1.0</span>
+          <span class="kw">ports</span><span class="op">:</span>
+            <span class="op">-</span> <span class="kw">containerPort</span><span class="op">:</span> <span class="num">3000</span>
+          <span class="kw">resources</span><span class="op">:</span>
+            <span class="kw">requests</span><span class="op">:</span>
+              <span class="kw">cpu</span><span class="op">:</span> <span class="str">"100m"</span>          <span class="cm"># 0.1 CPU core guaranteed</span>
+              <span class="kw">memory</span><span class="op">:</span> <span class="str">"128Mi"</span>
+            <span class="kw">limits</span><span class="op">:</span>
+              <span class="kw">cpu</span><span class="op">:</span> <span class="str">"500m"</span>          <span class="cm"># max 0.5 CPU core</span>
+              <span class="kw">memory</span><span class="op">:</span> <span class="str">"256Mi"</span>
+          <span class="kw">readinessProbe</span><span class="op">:</span>
+            <span class="kw">httpGet</span><span class="op">:</span>
+              <span class="kw">path</span><span class="op">:</span> <span class="str">/health</span>
+              <span class="kw">port</span><span class="op">:</span> <span class="num">3000</span>
+            <span class="kw">initialDelaySeconds</span><span class="op">:</span> <span class="num">5</span></pre>
+  </div>
+
+  <div class="callout important">
+    <div class="callout-title"><span class="callout-icon">🔑</span> Key Insight — Labels &amp; Selectors</div>
+    Labels are key-value pairs attached to resources. Selectors find resources by label. This is how a Deployment finds its Pods, and how a Service finds its target Pods — <strong>decoupled by design</strong>. Change a label, and the Service instantly re-routes traffic to the new set.
+  </div>
+</div>
+
+
+<!-- 3.3 -->
+<div class="section" id="t3s3">
+  <div class="section-title"><span class="section-num">3.3</span> Services &amp; Networking</div>
+
+  <p>Pods are temporary — they get killed and recreated with new IP addresses. A <strong>Service</strong> gives your Pods a stable DNS name and IP. It load-balances traffic across all healthy Pods matching its selector.</p>
+
+  <!-- DIAGRAM 5 – K8s service types -->
+  <div class="diagram-wrap">
+    <div class="diagram-label"><span>DIAGRAM 05</span> — Kubernetes Service types and traffic flow</div>
+    <svg viewBox="0 0 840 300" xmlns="http://www.w3.org/2000/svg" style="background:#0a0c18;padding:20px 16px;">
+      <!-- Internet box -->
+      <rect x="20" y="110" width="90" height="60" rx="8" fill="#1a1a2e" stroke="#252a45" stroke-width="1"/>
+      <text x="65" y="135" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">Internet</text>
+      <text x="65" y="152" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="10" text-anchor="middle">/ User</text>
+
+      <!-- LoadBalancer Service -->
+      <rect x="140" y="85" width="155" height="108" rx="10" fill="#0d1525" stroke="#f7c948" stroke-width="1.5"/>
+      <text x="217" y="107" fill="#f7c948" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">LoadBalancer</text>
+      <text x="217" y="122" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Service</text>
+      <text x="217" y="145" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">AWS ELB / GCP LB</text>
+      <text x="217" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">Public IP assigned</text>
+      <text x="217" y="178" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">type: LoadBalancer</text>
+
+      <!-- ClusterIP Service -->
+      <rect x="320" y="85" width="155" height="108" rx="10" fill="#0d1525" stroke="#3ec9f5" stroke-width="1.5"/>
+      <text x="397" y="107" fill="#3ec9f5" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">ClusterIP</text>
+      <text x="397" y="122" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Service (default)</text>
+      <text x="397" y="145" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">Internal only</text>
+      <text x="397" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">Stable cluster IP</text>
+      <text x="397" y="178" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">type: ClusterIP</text>
+
+      <!-- NodePort Service -->
+      <rect x="500" y="85" width="155" height="108" rx="10" fill="#0d1525" stroke="#7c6af7" stroke-width="1.5"/>
+      <text x="577" y="107" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="9" font-weight="700" text-anchor="middle">NodePort</text>
+      <text x="577" y="122" fill="#7b84ab" font-family="'JetBrains Mono',monospace" font-size="8.5" text-anchor="middle">Service</text>
+      <text x="577" y="145" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">Node IP + port</text>
+      <text x="577" y="160" fill="#697098" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">30000–32767 range</text>
+      <text x="577" y="178" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="8" text-anchor="middle">type: NodePort</text>
+
+      <!-- Pods -->
+      <rect x="680" y="48"  width="140" height="38" rx="6" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="750" y="72" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod  api:1.0 (:3000)</text>
+      <rect x="680" y="130" width="140" height="38" rx="6" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="750" y="154" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod  api:1.0 (:3000)</text>
+      <rect x="680" y="210" width="140" height="38" rx="6" fill="#091a28" stroke="#1a3a50" stroke-width="1"/>
+      <text x="750" y="234" fill="#5bf5a0" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">Pod  api:1.0 (:3000)</text>
+
+      <!-- Arrows internet -> LB -> ClusterIP -> pods -->
+      <line x1="110" y1="140" x2="138" y2="140" stroke="#f7c948" stroke-width="1.5"/>
+      <polygon points="138,135 148,140 138,145" fill="#f7c948"/>
+      <line x1="295" y1="140" x2="318" y2="140" stroke="#3ec9f5" stroke-width="1.5"/>
+      <polygon points="318,135 328,140 318,145" fill="#3ec9f5"/>
+      <line x1="475" y1="67" x2="678" y2="67" stroke="#3ec9f5" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+      <line x1="475" y1="140" x2="678" y2="149" stroke="#3ec9f5" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+      <line x1="475" y1="180" x2="678" y2="229" stroke="#3ec9f5" stroke-width="1" stroke-dasharray="4,3" opacity=".6"/>
+      <polygon points="678,62 688,67 678,72" fill="#3ec9f5" opacity=".6"/>
+      <polygon points="678,144 688,149 678,154" fill="#3ec9f5" opacity=".6"/>
+      <polygon points="678,224 688,229 678,234" fill="#3ec9f5" opacity=".6"/>
+
+      <!-- label selector -->
+      <text x="750" y="275" fill="#7c6af7" font-family="'JetBrains Mono',monospace" font-size="9" text-anchor="middle">app: api  (label selector)</text>
+    </svg>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">service.yaml</span>
+      <span class="code-lang lang-yaml">YAML</span>
+    </div>
+    <pre><span class="kw">apiVersion</span><span class="op">:</span> <span class="str">v1</span>
+<span class="kw">kind</span><span class="op">:</span> <span class="cls">Service</span>
+<span class="kw">metadata</span><span class="op">:</span>
+  <span class="kw">name</span><span class="op">:</span> <span class="str">api-service</span>
+<span class="kw">spec</span><span class="op">:</span>
+  <span class="kw">type</span><span class="op">:</span> <span class="str">LoadBalancer</span>              <span class="cm"># provisions an AWS ELB automatically</span>
+  <span class="kw">selector</span><span class="op">:</span>
+    <span class="kw">app</span><span class="op">:</span> <span class="str">api</span>                       <span class="cm"># routes to Pods with this label</span>
+  <span class="kw">ports</span><span class="op">:</span>
+    <span class="op">-</span> <span class="kw">protocol</span><span class="op">:</span> <span class="str">TCP</span>
+      <span class="kw">port</span><span class="op">:</span> <span class="num">80</span>                      <span class="cm"># external port</span>
+      <span class="kw">targetPort</span><span class="op">:</span> <span class="num">3000</span>             <span class="cm"># Pod port</span></pre>
+  </div>
+</div>
+
+
+<!-- 3.4 -->
+<div class="section" id="t3s4">
+  <div class="section-title"><span class="section-num">3.4</span> kubectl in Practice</div>
+
+  <div class="tbl-wrap">
+    <table class="data">
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>kubectl get pods</code></td><td>List Pods in the default namespace</td></tr>
+        <tr><td><code>kubectl get pods -n production</code></td><td>List Pods in the production namespace</td></tr>
+        <tr><td><code>kubectl describe pod &lt;name&gt;</code></td><td>Full details + events (great for debugging)</td></tr>
+        <tr><td><code>kubectl logs &lt;pod&gt; -f</code></td><td>Stream logs from a Pod</td></tr>
+        <tr><td><code>kubectl apply -f deployment.yaml</code></td><td>Create or update resources from file</td></tr>
+        <tr><td><code>kubectl delete -f deployment.yaml</code></td><td>Delete resources defined in file</td></tr>
+        <tr><td><code>kubectl exec -it &lt;pod&gt; -- sh</code></td><td>Open shell inside a running Pod</td></tr>
+        <tr><td><code>kubectl scale deploy/api --replicas=5</code></td><td>Scale deployment to 5 replicas</td></tr>
+        <tr><td><code>kubectl rollout status deploy/api</code></td><td>Watch rolling update progress</td></tr>
+        <tr><td><code>kubectl rollout undo deploy/api</code></td><td>Roll back to previous version</td></tr>
+        <tr><td><code>kubectl get events --sort-by='.lastTimestamp'</code></td><td>View recent cluster events</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-fname">Terminal — Full deploy + check workflow</span>
+      <span class="code-lang lang-bash">Bash</span>
+    </div>
+    <pre><span class="cm"># 1. Apply the Deployment and Service</span>
+<span class="fn">kubectl</span> apply <span class="op">-f</span> deployment.yaml
+<span class="fn">kubectl</span> apply <span class="op">-f</span> service.yaml
+
+<span class="cm"># 2. Watch pods come up</span>
+<span class="fn">kubectl</span> get pods <span class="op">-w</span>
+
+<span class="cm"># Output:</span>
+<span class="str">NAME                              READY   STATUS    RESTARTS   AGE</span>
+<span class="str">api-deployment-5c9b4d7f8-kxp2m    1/1     Running   0          12s</span>
+<span class="str">api-deployment-5c9b4d7f8-mnq7r    1/1     Running   0          12s</span>
+<span class="str">api-deployment-5c9b4d7f8-t8wvj    1/1     Running   0          11s</span>
+
+<span class="cm"># 3. Get the external IP (LoadBalancer)</span>
+<span class="fn">kubectl</span> get svc api-service
+
+<span class="cm"># 4. Deploy a new image version (rolling update)</span>
+<span class="fn">kubectl</span> set image deployment/api-deployment \
+  api=<span class="str">123456789.dkr.ecr.eu-west-1.amazonaws.com/myapi:2.0</span>
+
+<span class="cm"># 5. Monitor rollout</span>
+<span class="fn">kubectl</span> rollout status deployment/api-deployment</pre>
+  </div>
+
+  <div class="callout realworld">
+    <div class="callout-title"><span class="callout-icon">🌍</span> Real-World Pattern</div>
+    In production teams you never run <code>kubectl set image</code> manually. You update the image tag in <code>deployment.yaml</code>, commit it, and a GitOps tool like <strong>ArgoCD</strong> or <strong>Flux</strong> automatically reconciles the cluster to match the repo — complete audit trail and rollback built in.
+  </div>
+</div>
+
+
+<!-- ══ SUMMARY ══ -->
+<h2 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin:48px 0 20px;border-top:1px solid var(--border);padding-top:32px;">
+  What You've Learned — Topics 01 to 03
+</h2>
+
+<div class="summary-grid">
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 01</div>
+    <div class="summary-card-title" style="color:var(--accent1);">Docker Fundamentals</div>
+    <div class="summary-card-body">Containers vs VMs, image layers &amp; cache, Dockerfile instructions (FROM, RUN, COPY, CMD, EXPOSE, ENV), build &amp; run commands, Docker Hub &amp; registries, port mapping with <code>-p</code></div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 02</div>
+    <div class="summary-card-title" style="color:var(--accent2);">Networking, Volumes &amp; Compose</div>
+    <div class="summary-card-body">Bridge/host/overlay networks, container DNS by name, named volumes vs bind mounts, persistent data for databases, Docker Compose YAML (services, volumes, networks, depends_on), full stack with one command</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-card-num">TOPIC 03</div>
+    <div class="summary-card-title" style="color:var(--accent4);">Kubernetes Core Concepts</div>
+    <div class="summary-card-body">Control plane (API server, etcd, scheduler, controllers), worker nodes (kubelet, kube-proxy), Pods, ReplicaSets, Deployments with rolling updates, Services (ClusterIP / LoadBalancer / NodePort), labels &amp; selectors, essential kubectl commands</div>
+  </div>
+</div>
+
+<div class="callout tip" style="margin-bottom:48px;">
+  <div class="callout-title"><span class="callout-icon">📅</span> NEXT UP</div>
+  <strong>Topics 04–06:</strong> ConfigMaps &amp; Secrets, Persistent Volumes &amp; StatefulSets, Ingress Controllers &amp; TLS termination, Helm charts, Resource quotas &amp; autoscaling (HPA/VPA).
+</div>
+
+</div><!-- /page -->
+
+<footer>
+  <strong>Docker &amp; Kubernetes for Everyone</strong> — Topics 01–03 &nbsp;·&nbsp;
+  Includes 5 architecture diagrams &nbsp;·&nbsp;
+  Real-world AWS / cloud examples &nbsp;·&nbsp;
+  Written for beginners with a dev background
+</footer>
+
+</body>
+</html>
